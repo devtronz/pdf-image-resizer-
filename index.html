@@ -6,5 +6,24 @@
 <body>
   <h1>It works 🎉</h1>
   <p>Hosted on Cloudflare Pages</p>
+
+  <script>
+async function sendLog(action) {
+  try {
+    await fetch("https://your-worker-name.workers.dev/log", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: action,
+        time: new Date().toISOString(),
+        page: window.location.pathname,
+        userAgent: navigator.userAgent
+      })
+    });
+  } catch (e) {
+    console.log("log failed");
+  }
+}
+</script>
 </body>
 </html>
