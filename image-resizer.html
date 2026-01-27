@@ -1,37 +1,70 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Image Resizer</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h1>🖼 Image Resizer</h1>
+<div class="container">
 
-<input type="file" id="img" accept="image/*">
+  <header>
+    <h1>Image Resizer</h1>
+    <p class="subtitle">Resize images by size or dimensions — fully offline</p>
+  </header>
 
-<label>Target Size</label>
-<input type="number" id="sizeValue" placeholder="Size">
-<select id="sizeUnit">
-  <option value="kb">KB</option>
-  <option value="mb">MB</option>
-</select>
+  <!-- INPUT -->
+  <section class="card">
+    <h2>1. Select Image</h2>
+    <input type="file" id="img" accept="image/*">
+    <p class="hint">Supported: JPG, PNG, WebP</p>
+  </section>
 
-<label>Width (px)</label>
-<input type="number" id="width" placeholder="Optional">
+  <!-- SIZE CONTROL -->
+  <section class="card">
+    <h2>2. Target File Size (Optional)</h2>
 
-<label>Height (px)</label>
-<input type="number" id="height" placeholder="Optional">
+    <div class="row">
+      <input type="number" id="sizeValue" placeholder="Enter size">
+      <select id="sizeUnit">
+        <option value="kb">KB</option>
+        <option value="mb">MB</option>
+      </select>
+    </div>
 
-<button onclick="resizeImage()">Resize Image</button>
+    <p class="hint">
+      Leave empty if you only want to resize by width or height.
+    </p>
+  </section>
 
-<br><br>
-<a id="download" download>Download Image</a>
+  <!-- DIMENSIONS -->
+  <section class="card">
+    <h2>3. Resize Dimensions (Optional)</h2>
 
-<br><br>
-<a href="index.html">← Back to PDF</a>
+    <div class="row">
+      <input type="number" id="width" placeholder="Width (px)">
+      <span class="muted">or</span>
+      <input type="number" id="height" placeholder="Height (px)">
+    </div>
+
+    <p class="hint">
+      Aspect ratio is preserved automatically.
+    </p>
+  </section>
+
+  <!-- ACTION -->
+  <section class="card action">
+    <button onclick="resizeImage()">Resize Image</button>
+    <a id="download" download class="download-link"></a>
+  </section>
+
+  <footer>
+    <a href="index.html">← Back to Photo to PDF</a>
+  </footer>
+
+</div>
 
 <script src="resizer.js"></script>
 </body>
