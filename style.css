@@ -156,3 +156,17 @@ footer a {
   color: #2563eb;
   text-decoration: none;
 }
+
+.preview-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.preview-list img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
