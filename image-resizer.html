@@ -4,22 +4,35 @@
   <meta charset="UTF-8">
   <title>Image Resizer</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <h1>🖼 Image Resizer</h1>
 
-<input type="file" id="img">
-<input type="number" id="kb" placeholder="Target KB">
-<button onclick="resize()">Resize</button>
+<input type="file" id="img" accept="image/*">
 
-<a id="download"></a>
-<br>
+<label>Target Size</label>
+<input type="number" id="sizeValue" placeholder="Size">
+<select id="sizeUnit">
+  <option value="kb">KB</option>
+  <option value="mb">MB</option>
+</select>
+
+<label>Width (px)</label>
+<input type="number" id="width" placeholder="Optional">
+
+<label>Height (px)</label>
+<input type="number" id="height" placeholder="Optional">
+
+<button onclick="resizeImage()">Resize Image</button>
+
+<br><br>
+<a id="download" download>Download Image</a>
+
+<br><br>
 <a href="index.html">← Back to PDF</a>
 
 <script src="resizer.js"></script>
-
 </body>
 </html>
