@@ -112,3 +112,29 @@ footer a {
   text-decoration: none;
   font-size: 14px;
 }
+
+.preview-box {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.preview-box div {
+  width: 50%;
+  text-align: center;
+}
+
+.preview-title {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.preview-box img {
+  width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #f3f4f6;
+  border: 1px dashed #d1d5db;
+}
