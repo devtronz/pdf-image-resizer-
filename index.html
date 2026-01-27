@@ -1,23 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Photo to PDF</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h1>📄 Photo to PDF</h1>
+<div class="container">
 
-<input type="file" id="images" accept="image/*" multiple>
-<button onclick="makePDF()">Convert to PDF</button>
+  <header>
+    <h1>Photo to PDF</h1>
+    <p class="subtitle">Convert multiple images into one PDF (offline)</p>
+  </header>
 
-<a href="image-resizer.html">Go to Image Resizer →</a>
+  <!-- SELECT IMAGES -->
+  <section class="card">
+    <h2>1. Select Images</h2>
+    <input type="file" id="images" accept="image/*" multiple>
+    <p class="hint">You can select multiple images</p>
+  </section>
+
+  <!-- PREVIEW -->
+  <section class="card">
+    <h2>Preview Order</h2>
+    <div id="previewList" class="preview-list"></div>
+  </section>
+
+  <!-- ACTION -->
+  <section class="card action">
+    <button onclick="makePDF()">Convert to PDF</button>
+
+    <div class="progress-wrapper">
+      <div id="progressText">Idle</div>
+      <div class="progress-bar">
+        <div id="progressFill"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <a href="image-resizer.html">Go to Image Resizer →</a>
+  </footer>
+
+</div>
 
 <script src="jspdf.umd.min.js"></script>
 <script src="pdf.js"></script>
-
 </body>
 </html>
