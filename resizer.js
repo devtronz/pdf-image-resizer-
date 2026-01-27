@@ -1,3 +1,11 @@
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
+
+function setProgress(percent, text) {
+  progressFill.style.width = percent + "%";
+  progressText.textContent = text;
+}
+
 const originalPreview = document.getElementById("originalPreview");
 const resizedPreview = document.getElementById("resizedPreview");
 
