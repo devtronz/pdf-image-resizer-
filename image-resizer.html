@@ -40,9 +40,7 @@
 </section>
 
   <!-- SIZE CONTROL -->
-document.getElementById("img").addEventListener("change", () => {
-  setProgress(0, "Image selected");
-});
+
 
   <section class="card">
     <h2>2. Target File Size (Optional)</h2>
@@ -86,6 +84,10 @@ document.getElementById("img").addEventListener("change", () => {
 </div>
     <button onclick="resizeImage()">Resize Image</button>
     <a id="download" download class="download-link"></a>
+
+document.getElementById("img").addEventListener("change", () => {
+  setProgress(0, "Image selected");
+});
   </section>
 
   <footer>
