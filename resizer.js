@@ -1,3 +1,18 @@
+const originalPreview = document.getElementById("originalPreview");
+const resizedPreview = document.getElementById("resizedPreview");
+
+document.getElementById("img").addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    originalPreview.src = reader.result;
+    resizedPreview.src = "";
+  };
+  reader.readAsDataURL(file);
+});
+
 function resizeImage() {
   const file = document.getElementById("img").files[0];
   if (!file) return alert("Select an image");
@@ -10,22 +25,20 @@ function resizeImage() {
   const img = new Image();
   const reader = new FileReader();
 
-  reader.onload = e => {
-    img.src = e.target.result;
-  };
+  reader.onload = e => img.src = e.target.result;
 
   img.onload = () => {
     let width = img.width;
     let height = img.height;
 
     if (targetWidth) {
-      width = parseInt(targetWidth);
-      height = Math.round((img.height / img.width) * width);
+      width = +targetWidth;
+      height = Math.round(img.height * (width / img.width));
     }
 
     if (targetHeight) {
-      height = parseInt(targetHeight);
-      width = Math.round((img.width / img.height) * height);
+      height = +targetHeight;
+      width = Math.round(img.width * (height / img.height));
     }
 
     const canvas = document.createElement("canvas");
@@ -33,7 +46,6 @@ function resizeImage() {
 
     canvas.width = width;
     canvas.height = height;
-
     ctx.drawImage(img, 0, 0, width, height);
 
     let quality = 0.9;
@@ -53,6 +65,9 @@ function resizeImage() {
           compress();
         } else {
           const url = URL.createObjectURL(blob);
+
+          resizedPreview.src = url;
+
           const link = document.getElementById("download");
           link.href = url;
           link.textContent =
