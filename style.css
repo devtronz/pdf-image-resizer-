@@ -31,7 +31,7 @@ h1 {
 }
 
 .card {
-  background: #ffffff;
+  background: #fff;
   padding: 16px;
   border-radius: 12px;
   margin-bottom: 16px;
@@ -43,19 +43,12 @@ h1 {
   margin-bottom: 10px;
 }
 
-input,
-select {
+input, select {
   width: 100%;
   padding: 12px;
   font-size: 15px;
   border-radius: 8px;
   border: 1px solid #d1d5db;
-  outline: none;
-}
-
-input:focus,
-select:focus {
-  border-color: #4f46e5;
 }
 
 .row {
@@ -73,6 +66,31 @@ select:focus {
   font-size: 13px;
   color: #6b7280;
   margin-top: 6px;
+}
+
+.preview-box {
+  display: flex;
+  gap: 12px;
+}
+
+.preview-box div {
+  width: 50%;
+  text-align: center;
+}
+
+.preview-title {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.preview-box img {
+  width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+  background: #f3f4f6;
+  border-radius: 8px;
+  border: 1px dashed #d1d5db;
 }
 
 .action {
@@ -97,48 +115,12 @@ button:hover {
 .download-link {
   display: block;
   margin-top: 12px;
+  color: #2563eb;
   font-weight: 500;
-  color: #2563eb;
   text-decoration: none;
 }
 
-footer {
-  text-align: center;
-  margin-top: 10px;
-}
-
-footer a {
-  color: #2563eb;
-  text-decoration: none;
-  font-size: 14px;
-}
-
-.preview-box {
-  display: flex;
-  gap: 12px;
-  justify-content: space-between;
-}
-
-.preview-box div {
-  width: 50%;
-  text-align: center;
-}
-
-.preview-title {
-  font-size: 13px;
-  color: #6b7280;
-  margin-bottom: 6px;
-}
-
-.preview-box img {
-  width: 100%;
-  max-height: 180px;
-  object-fit: contain;
-  border-radius: 8px;
-  background: #f3f4f6;
-  border: 1px dashed #d1d5db;
-}
-
+/* PROGRESS */
 .progress-wrapper {
   margin-top: 12px;
 }
@@ -147,7 +129,6 @@ footer a {
   font-size: 13px;
   color: #6b7280;
   margin-bottom: 6px;
-  text-align: center;
 }
 
 .progress-bar {
@@ -159,8 +140,19 @@ footer a {
 }
 
 #progressFill {
-  height: 100%;
   width: 0%;
+  height: 100%;
   background: #4f46e5;
   transition: width 0.3s ease;
+}
+
+footer {
+  text-align: center;
+  margin-top: 10px;
+}
+
+footer a {
+  font-size: 14px;
+  color: #2563eb;
+  text-decoration: none;
 }
