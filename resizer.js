@@ -1,3 +1,5 @@
+const originalPreview = document.getElementById("originalPreview");
+const resizedPreview = document.getElementById("resizedPreview");
 const progressFill = document.getElementById("progressFill");
 const progressText = document.getElementById("progressText");
 
@@ -6,12 +8,11 @@ function setProgress(percent, text) {
   progressText.textContent = text;
 }
 
-const originalPreview = document.getElementById("originalPreview");
-const resizedPreview = document.getElementById("resizedPreview");
-
 document.getElementById("img").addEventListener("change", e => {
   const file = e.target.files[0];
   if (!file) return;
+
+  setProgress(5, "Image selected");
 
   const reader = new FileReader();
   reader.onload = () => {
@@ -25,6 +26,8 @@ function resizeImage() {
   const file = document.getElementById("img").files[0];
   if (!file) return alert("Select an image");
 
+  setProgress(10, "Loading image…");
+
   const sizeValue = document.getElementById("sizeValue").value;
   const sizeUnit = document.getElementById("sizeUnit").value;
   const targetWidth = document.getElementById("width").value;
@@ -36,6 +39,8 @@ function resizeImage() {
   reader.onload = e => img.src = e.target.result;
 
   img.onload = () => {
+    setProgress(40, "Resizing image…");
+
     let width = img.width;
     let height = img.height;
 
@@ -55,6 +60,8 @@ function resizeImage() {
     canvas.width = width;
     canvas.height = height;
     ctx.drawImage(img, 0, 0, width, height);
+
+    setProgress(60, "Optimizing size…");
 
     let quality = 0.9;
     let targetBytes = null;
@@ -80,6 +87,8 @@ function resizeImage() {
           link.href = url;
           link.textContent =
             "Download (" + Math.round(blob.size / 1024) + " KB)";
+
+          setProgress(100, "Done! Ready to download");
         }
       }, "image/jpeg", quality);
     }
