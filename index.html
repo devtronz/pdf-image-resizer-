@@ -1,118 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- Essential for PWA -->
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#4f46e5">
-  <meta name="description" content="Convert multiple photos to one PDF directly in your browser – no server upload required">
-  
-  <!-- Optional: Improves install on iOS/Android -->
-  <link rel="apple-touch-icon" href="/icon-512.png">
-  
   <title>Photo to PDF</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#4f46e5">
 
-  <!-- Your CSS -->
-  <link rel="stylesheet" href="/style.css">
-
-  <!-- Inter font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/icon-192.png">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div class="card">
-    <h1>Photo to PDF</h1>
-    <p>Convert images to one PDF. No upload.</p>
+<h1>📄 Photo to PDF</h1>
 
-    <label class="upload">
-      <input type="file" id="images" multiple accept="image/*">
-      📸 Click to select photos
-    </label>
+<input type="file" id="images" accept="image/*" multiple>
+<button onclick="makePDF()">Convert to PDF</button>
 
-    <button onclick="makePDF()">Convert to PDF</button>
+<a href="image-resizer.html">Go to Image Resizer →</a>
 
-    <a href="image-resizer.html" class="nav-btn">Image Resizer</a>
+<script src="jspdf.umd.min.js"></script>
+<script src="pdf.js"></script>
 
-    <footer>Runs fully in your browser</footer>
-  </div>
-
-  <!-- jsPDF library (CDN) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-  <!-- PDF conversion script -->
-  <script>
-    async function makePDF() {
-      const files = document.getElementById("images").files;
-      if (files.length === 0) {
-        alert("Please select at least one image!");
-        return;
-      }
-
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({ unit: "px", format: "a4" }); // Better page size control
-
-      for (let i = 0; i < files.length; i++) {
-        try {
-          const img = await loadImage(files[i]);
-          const pageWidth = pdf.internal.pageSize.getWidth();
-          const pageHeight = pdf.internal.pageSize.getHeight();
-          
-          // Calculate height to fit width, preserve aspect ratio
-          let imgWidth = pageWidth;
-          let imgHeight = (img.height * imgWidth) / img.width;
-
-          // If image is too tall, scale to fit height instead
-          if (imgHeight > pageHeight) {
-            imgHeight = pageHeight;
-            imgWidth = (img.width * imgHeight) / img.height;
-          }
-
-          if (i > 0) pdf.addPage();
-          pdf.addImage(img, "JPEG", 0, 0, imgWidth, imgHeight); // Center if needed: (pageWidth - imgWidth)/2
-        } catch (err) {
-          console.error("Error processing image", i + 1, err);
-          alert("Error with one of the images. Try different files.");
-          return;
-        }
-      }
-
-      pdf.save("my-photos.pdf");
-      alert("PDF created successfully! Check your downloads.");
-    }
-
-    function loadImage(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = new Image();
-          img.onload = () => resolve(img);
-          img.onerror = () => reject(new Error("Image load failed"));
-          img.src = e.target.result;
-        };
-        reader.onerror = () => reject(new Error("FileReader failed"));
-        reader.readAsDataURL(file);
-      });
-    }
-  </script>
-
-  <!-- PWA Service Worker Registration -->
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/service-worker.js")
-          .then(reg => {
-            console.log("✅ Service Worker registered! Scope:", reg.scope);
-          })
-          .catch(err => {
-            console.error("❌ Service Worker failed:", err);
-          });
-      });
-    } else {
-      console.log("Service Workers not supported in this browser.");
-    }
-  </script>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/service-worker.js");
+}
+</script>
 
 </body>
 </html>
