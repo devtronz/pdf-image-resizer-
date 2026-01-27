@@ -1,57 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#4f46e5">
-
   <meta charset="UTF-8">
   <title>Image Resizer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#4f46e5">
 
-  <!-- CSS -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/icon-192.png">
   <link rel="stylesheet" href="style.css">
-
-  <!-- Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<div class="card">
-  <h1>Image Resizer</h1>
-  <p>Resize image by pixels or target KB. No upload.</p>
+<h1>🖼 Image Resizer</h1>
 
-  <label class="upload">
-    <input type="file" id="image" accept="image/*">
-    🖼 Select Image
-  </label>
+<input type="file" id="img">
+<input type="number" id="kb" placeholder="Target KB">
+<button onclick="resize()">Resize</button>
 
-  <div class="controls">
-    <input type="number" id="width" placeholder="Width (px)">
-    <input type="number" id="height" placeholder="Height (px)">
-  </div>
+<a id="download"></a>
+<br>
+<a href="index.html">← Back to PDF</a>
 
-  <input class="kb-input" type="number" id="targetKB" placeholder="Target size (KB)">
+<script src="resizer.js"></script>
 
-  <button onclick="resizeImage()">Resize & Download</button>
-
-  <a href="index.html" class="nav-btn">← Back to Photo to PDF</a>
-
-  <footer>Runs fully in your browser</footer>
-</div>
-
-<!-- JS -->
-<script src="image-resizer.js"></script>
-
-
-<script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/service-worker.js")
-      .then(() => console.log("SW registered"))
-      .catch(err => console.log("SW failed", err));
-  });
-}
-</script>
 </body>
 </html>
