@@ -1,26 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#4f46e5">
-
   <meta charset="UTF-8">
   <title>Image Resizer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <!-- CSS -->
   <link rel="stylesheet" href="style.css">
+
+  <!-- Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <div class="card">
   <h1>Image Resizer</h1>
-  <p>Resize images locally</p>
+  <p>Resize image by pixels or target KB. No upload.</p>
 
   <label class="upload">
     <input type="file" id="image" accept="image/*">
-    🖼 Select image
+    🖼 Select Image
   </label>
 
   <div class="controls">
@@ -28,49 +27,17 @@
     <input type="number" id="height" placeholder="Height (px)">
   </div>
 
-<input type="number" id="targetKB" placeholder="Target size (KB)">
+  <input class="kb-input" type="number" id="targetKB" placeholder="Target size (KB)">
 
   <button onclick="resizeImage()">Resize & Download</button>
 
-  <a href="index.html" class="nav-btn">← Back to PDF</a>
+  <a href="index.html" class="nav-btn">← Back to Photo to PDF</a>
+
+  <footer>Runs fully in your browser</footer>
 </div>
 
-<script>
-function resizeImage() {
-  const file = document.getElementById("image").files[0];
-  if (!file) return alert("Select image");
+<!-- JS -->
+<script src="image-resizer.js"></script>
 
-  const w = width.value;
-  const h = height.value;
-  if (!w || !h) return alert("Enter size");
-
-  const img = new Image();
-  const r = new FileReader();
-
-  r.onload = e => {
-    img.onload = () => {
-      const c = document.createElement("canvas");
-      c.width = w;
-      c.height = h;
-      c.getContext("2d").drawImage(img, 0, 0, w, h);
-
-      const a = document.createElement("a");
-      a.download = "resized.png";
-      a.href = c.toDataURL("image/png");
-      a.click();
-    };
-    img.src = e.target.result;
-  };
-
-  r.readAsDataURL(file);
-}
-</script>
-
-
-<script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js");
-}
-</script>
 </body>
 </html>
