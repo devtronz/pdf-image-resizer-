@@ -12,82 +12,68 @@
 
   <header>
     <h1>Image Resizer</h1>
-    <p class="subtitle">Resize images by size or dimensions — fully offline</p>
+    <p class="subtitle">Resize images offline by size or dimensions</p>
   </header>
 
-  <!-- INPUT -->
+  <!-- SELECT IMAGE -->
   <section class="card">
     <h2>1. Select Image</h2>
     <input type="file" id="img" accept="image/*">
-    <p class="hint">Supported: JPG, PNG, WebP</p>
+    <p class="hint">JPG, PNG, WebP supported</p>
   </section>
 
-<!-- PREVIEW -->
-<section class="card">
-  <h2>Preview</h2>
-
-  <div class="preview-box">
-    <div>
-      <p class="preview-title">Original</p>
-      <img id="originalPreview">
+  <!-- PREVIEW -->
+  <section class="card">
+    <h2>Preview</h2>
+    <div class="preview-box">
+      <div>
+        <p class="preview-title">Original</p>
+        <img id="originalPreview">
+      </div>
+      <div>
+        <p class="preview-title">Resized</p>
+        <img id="resizedPreview">
+      </div>
     </div>
+  </section>
 
-    <div>
-      <p class="preview-title">Resized</p>
-      <img id="resizedPreview">
-    </div>
-  </div>
-</section>
-
-  <!-- SIZE CONTROL -->
-
-
+  <!-- FILE SIZE -->
   <section class="card">
     <h2>2. Target File Size (Optional)</h2>
-
     <div class="row">
-      <input type="number" id="sizeValue" placeholder="Enter size">
+      <input type="number" id="sizeValue" placeholder="Size">
       <select id="sizeUnit">
         <option value="kb">KB</option>
         <option value="mb">MB</option>
       </select>
     </div>
-
-    <p class="hint">
-      Leave empty if you only want to resize by width or height.
-    </p>
+    <p class="hint">Leave empty if not needed</p>
   </section>
 
   <!-- DIMENSIONS -->
   <section class="card">
     <h2>3. Resize Dimensions (Optional)</h2>
-
     <div class="row">
       <input type="number" id="width" placeholder="Width (px)">
       <span class="muted">or</span>
       <input type="number" id="height" placeholder="Height (px)">
     </div>
-
-    <p class="hint">
-      Aspect ratio is preserved automatically.
-    </p>
+    <p class="hint">Aspect ratio preserved automatically</p>
   </section>
 
   <!-- ACTION -->
   <section class="card action">
-<!-- PROGRESS -->
-<div class="progress-wrapper">
-  <div id="progressText">Idle</div>
-  <div class="progress-bar">
-    <div id="progressFill"></div>
-  </div>
-</div>
     <button onclick="resizeImage()">Resize Image</button>
-    <a id="download" download class="download-link"></a>
 
-document.getElementById("img").addEventListener("change", () => {
-  setProgress(0, "Image selected");
-});
+    <!-- PROGRESS -->
+    <div class="progress-wrapper">
+      <div id="progressText">Idle</div>
+      <div class="progress-bar">
+        <div id="progressFill"></div>
+      </div>
+    </div>
+
+    <a id="download" class="download-link" download></a>
   </section>
 
   <footer>
