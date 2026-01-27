@@ -27,6 +27,7 @@ h1 {
   margin: 0 0 10px;
   font-size: 24px;
   font-weight: 700;
+  color: #111827;
 }
 
 p {
@@ -54,14 +55,20 @@ input[type="file"] {
 .controls {
   display: flex;
   gap: 10px;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 }
 
-.controls input {
+.controls input,
+.kb-input {
   width: 100%;
   padding: 10px;
   border-radius: 10px;
   border: 1px solid #d1d5db;
+  font-size: 14px;
+}
+
+.kb-input {
+  margin-bottom: 15px;
 }
 
 button {
