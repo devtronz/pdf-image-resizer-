@@ -1,4 +1,4 @@
-// server.js - Advanced visitor logging with full IP geolocation sent to Telegram
+// server.js - Advanced visitor logging with full IP geolocation → Telegram (HTML safe)
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
@@ -6,7 +6,7 @@ const fetch = require('node-fetch');
 
 const app = express();
 
-// In-memory rate limiting per IP (prevents Telegram spam)
+// In-memory rate limiting per IP
 const lastLogTimes = new Map(); // IP → timestamp
 const LOG_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -23,7 +23,7 @@ function sha256(text) {
   return crypto.createHash('sha256').update(text).digest('hex');
 }
 
-// Trust proxy (essential on Render)
+// Trust proxy (important on Render)
 app.set('trust proxy', true);
 
 // Global middleware - logs every visit
@@ -64,9 +64,9 @@ app.use(async (req, res, next) => {
   let fingerprint = sha256(fpSource);
 
   // ── Full IP geolocation lookup ──
-  let geoInfo = '';
-  let country = 'unknown', city = 'unknown', timezone = 'unknown', lat = 'unknown', lon = 'unknown', isp = 'unknown', org = 'unknown', as = 'unknown';
-  let mobile = 'No', proxy = 'No';
+  let geoBlock = '';
+  let country = 'unknown', city = 'unknown', timezone = 'unknown', lat = 'unknown', lon = 'unknown';
+  let isp = 'unknown', org = 'unknown', as = 'unknown', mobile = 'No', proxy = 'No';
 
   if (ip !== 'unknown' && ip !== 'localhost') {
     try {
@@ -89,10 +89,10 @@ app.use(async (req, res, next) => {
           mobile = data.mobile ? 'Yes' : 'No';
           proxy = (data.proxy || data.hosting) ? 'Yes' : 'No';
 
-          geoInfo = `
+          geoBlock = `
 IP Lookup (similar to whatismyipaddress.com)
 
-${data.query}
+<code>${data.query}</code>
 
 🌍 Country: \( {country} ( \){cc})
 🏞 Region: \( {regionName} ( \){region})
@@ -107,39 +107,44 @@ ${data.query}
 🕵️ Proxy/VPN/Hosting?: ${proxy}
           `.trim();
 
-          // Enrich fingerprint
           fpSource += `|\( {timezone}| \){country}`;
           fingerprint = sha256(fpSource);
         }
       }
     } catch (err) {
       console.error('Geo lookup failed:', err.message);
-      geoInfo = '(Geo lookup failed)';
+      geoBlock = '(Geo lookup failed)';
     }
   }
 
-  // Build the full message
+  // Safe HTML-wrapped fields
+  const safeIp        = `<code>${ip}</code>`;
+  const safeFp        = `<code>${fingerprint}</code>`;
+  const safeUa        = `<code>${userAgent.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`;
+  const safeReferer   = `<code>${referer.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`;
+
+  // Build final message using HTML
   const site = req.hostname;
   const page = req.originalUrl;
   const fullUrl = req.protocol + '://' + req.hostname + req.originalUrl;
 
   const message = `
 ━━━━━━━━━━━━━━━
-🧾 *WEBSITE VISIT LOG*
+🧾 <b>WEBSITE VISIT LOG</b>
 ━━━━━━━━━━━━━━━
 
-🌐 *Site* • ${site}
-📄 *Page* • ${page}
+🌐 <b>Site</b> • ${site}
+📄 <b>Page</b> • ${page}
 • ${fullUrl}
 
-${geoInfo ? '🌍 *Visitor Location*\n' + geoInfo : ''}
+${geoBlock ? '🌍 <b>Visitor Location</b>\n' + geoBlock : ''}
 
-🛠 *Device* • ${deviceType}
-🧠 *Fingerprint* • \`${fingerprint}\`
+🛠 <b>Device</b> • ${deviceType}
+🧠 <b>Fingerprint</b> • ${safeFp}
 
-↩️ *Referrer* • ${referer}
-🖥 *User-Agent* • ${userAgent}
-🗣 *Language* • ${language}
+↩️ <b>Referrer</b> • ${safeReferer}
+🖥 <b>User-Agent</b> • ${safeUa}
+🗣 <b>Language</b> • ${language}
   `.trim();
 
   // Send to Telegram (non-blocking)
@@ -159,12 +164,13 @@ ${geoInfo ? '🌍 *Visitor Location*\n' + geoInfo : ''}
         body: JSON.stringify({
           chat_id: chatId,
           text: message,
-          parse_mode: 'Markdown'
+          parse_mode: 'HTML'   // ← Changed to HTML – much safer
         })
       });
 
       if (!tgRes.ok) {
-        console.error('Telegram API error:', await tgRes.text());
+        const errText = await tgRes.text();
+        console.error('Telegram API error:', errText);
       } else {
         console.log('Visit logged to Telegram');
       }
@@ -176,7 +182,7 @@ ${geoInfo ? '🌍 *Visitor Location*\n' + geoInfo : ''}
   next();
 });
 
-// Serve static files (HTML, JS, CSS, images...)
+// Serve static files
 app.use(express.static(path.join(__dirname, '.')));
 
 // SPA / catch-all fallback
