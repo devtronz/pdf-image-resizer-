@@ -1,11 +1,12 @@
+// server.js
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
-const fetch = require('node-fetch'); // add to dependencies
+const fetch = require('node-fetch'); // still needed for async Telegram send
 
 const app = express();
 
-// Your getDeviceType helper
+// ─── Helpers (same as your original) ───
 function getDeviceType(ua = '') {
   ua = ua.toLowerCase();
   if (/bot|crawler|spider|crawling/.test(ua)) return "Bot";
@@ -14,22 +15,26 @@ function getDeviceType(ua = '') {
   return "Desktop";
 }
 
-// SHA-256 helper (Node crypto)
 function sha256(text) {
   return crypto.createHash('sha256').update(text).digest('hex');
 }
 
-// Middleware – runs on EVERY request
+// ─── Middleware: Visitor logging to Telegram (adapted for Express) ───
 app.use(async (req, res, next) => {
   const url = new URL(req.protocol + '://' + req.get('host') + req.originalUrl);
 
-  const ip = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';
+  // IP handling (Render passes via headers; fallback to req.ip)
+  const ip = req.headers['cf-connecting-ip'] ||
+             (req.headers['x-forwarded-for']?.split(',')[0]?.trim()) ||
+             req.ip ||
+             'unknown';
+
   const referer = req.headers.referer || 'direct';
   const userAgent = req.headers['user-agent'] || 'unknown';
   const language = req.headers['accept-language'] || 'unknown';
 
-  // No cf object on Render → skip or use ipinfo.io for geo if needed
-  const country = 'unknown'; // or fetch from free geo API
+  // No Cloudflare cf object → geo remains unknown (or add free ipapi.co fetch later if needed)
+  const country = 'unknown';
   const city = 'unknown';
   const timezone = 'unknown';
 
@@ -64,10 +69,10 @@ app.use(async (req, res, next) => {
 🖥 *User-Agent* • ${userAgent}
   `.trim();
 
-  // Send async (non-blocking)
+  // Async non-blocking send to Telegram
   (async () => {
     try {
-      await fetch(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`, {
+      const response = await fetch(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -76,23 +81,29 @@ app.use(async (req, res, next) => {
           parse_mode: 'Markdown'
         })
       });
+      if (!response.ok) {
+        console.error('Telegram send failed:', await response.text());
+      }
     } catch (err) {
-      console.error('Telegram log failed:', err);
+      console.error('Telegram fetch error:', err);
     }
   })();
 
-  next(); // continue to serve content
+  next(); // Proceed to serve static files or other routes
 });
 
-// Serve your static files (index.html, css, js, etc.)
+// Serve static files from repo root (index.html, css, js, etc.)
 app.use(express.static(path.join(__dirname, '.')));
 
-// Optional SPA fallback
+// Optional: SPA-style fallback for any unmatched route
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-const port = process.env.PORT || 3000;
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Listening on port ${port}`);
+// ─── Port & Host Setup (critical for Render!) ───
+const port = process.env.PORT || 10000;  // Render provides PORT=10000 by default
+const host = '0.0.0.0';                  // Required: listen on all interfaces
+
+app.listen(port, host, () => {
+  console.log(`Server listening on http://\( {host}: \){port}`);
 });
