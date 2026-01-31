@@ -1,12 +1,16 @@
-// server.js
+// server.js (advanced visitor logging version)
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
-const fetch = require('node-fetch'); // still needed for async Telegram send
+const fetch = require('node-fetch');
 
 const app = express();
 
-// ─── Helpers (same as your original) ───
+// In-memory store for rate limiting logs per IP (resets on server restart)
+const lastLogTimes = new Map(); // IP → timestamp
+const LOG_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
+
+// Helpers
 function getDeviceType(ua = '') {
   ua = ua.toLowerCase();
   if (/bot|crawler|spider|crawling/.test(ua)) return "Bot";
@@ -19,29 +23,64 @@ function sha256(text) {
   return crypto.createHash('sha256').update(text).digest('hex');
 }
 
-// ─── Middleware: Visitor logging to Telegram (adapted for Express) ───
+// Advanced Middleware: Visitor logging
 app.use(async (req, res, next) => {
   const url = new URL(req.protocol + '://' + req.get('host') + req.originalUrl);
-
-  // IP handling (Render passes via headers; fallback to req.ip)
   const ip = req.headers['cf-connecting-ip'] ||
              (req.headers['x-forwarded-for']?.split(',')[0]?.trim()) ||
              req.ip ||
              'unknown';
 
+  // Rate limit: skip if same IP logged recently
+  const now = Date.now();
+  const lastTime = lastLogTimes.get(ip) || 0;
+  if (now - lastTime < LOG_COOLDOWN_MS) {
+    return next(); // Silent skip – no log spam
+  }
+  lastLogTimes.set(ip, now);
+
   const referer = req.headers.referer || 'direct';
   const userAgent = req.headers['user-agent'] || 'unknown';
   const language = req.headers['accept-language'] || 'unknown';
 
-  // No Cloudflare cf object → geo remains unknown (or add free ipapi.co fetch later if needed)
-  const country = 'unknown';
-  const city = 'unknown';
-  const timezone = 'unknown';
-
   const deviceType = getDeviceType(userAgent);
 
-  const fpSource = [userAgent, language, timezone, deviceType].join('|');
-  const fingerprint = sha256(fpSource);
+  // Basic fingerprint (can expand later)
+  const fpSource = [userAgent, language, deviceType].join('|'); // timezone added from geo
+  let fingerprint = sha256(fpSource);
+
+  // Default geo (fallback)
+  let country = 'unknown';
+  let city = 'unknown';
+  let timezone = 'unknown';
+  let latitude = 'unknown';
+  let longitude = 'unknown';
+  let isp = 'unknown';
+
+  // Fetch real geo from ipapi.co (free, no key needed for low volume)
+  if (ip !== 'unknown' && ip !== '127.0.0.1' && !ip.startsWith('::1')) {
+    try {
+      const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
+      if (geoRes.ok) {
+        const geoData = await geoRes.json();
+        if (!geoData.error) {
+          country   = geoData.country_name || 'unknown';
+          city      = geoData.city || 'unknown';
+          timezone  = geoData.timezone || 'unknown';
+          latitude  = geoData.latitude || 'unknown';
+          longitude = geoData.longitude || 'unknown';
+          isp       = geoData.org || geoData.asn || 'unknown';
+
+          // Improve fingerprint with geo data
+          fpSource += `|\( {timezone}| \){country}`;
+          fingerprint = sha256(fpSource);
+        }
+      }
+    } catch (err) {
+      console.error('Geo lookup failed:', err.message);
+      // Fallback to defaults – don't break request
+    }
+  }
 
   const site = url.hostname;
   const page = url.pathname;
@@ -49,30 +88,33 @@ app.use(async (req, res, next) => {
 
   const message = `
 ━━━━━━━━━━━━━━━
-🧾 *NEW VISIT*
+🧾 *ADVANCED VISIT LOG*
 ━━━━━━━━━━━━━━━
 
 🌐 *Site* • ${site}
 📄 *Page* • ${page}
 • ${fullUrl}
 
-🌍 *Visitor*
+🌍 *Visitor Location*
 • IP: \`${ip}\`
-• Device: ${deviceType}
 • Country: ${country}
 • City: ${city}
 • Timezone: ${timezone}
+• Lat/Long: ${latitude}, ${longitude}
+• ISP: ${isp}
 
+🛠 *Device* • ${deviceType}
 🧠 *Fingerprint* • \`${fingerprint}\`
 
 ↩️ *Referrer* • ${referer}
 🖥 *User-Agent* • ${userAgent}
+🗣 *Language* • ${language}
   `.trim();
 
-  // Async non-blocking send to Telegram
+  // Async Telegram send (non-blocking)
   (async () => {
     try {
-      const response = await fetch(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`, {
+      const tgRes = await fetch(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -81,28 +123,30 @@ app.use(async (req, res, next) => {
           parse_mode: 'Markdown'
         })
       });
-      if (!response.ok) {
-        console.error('Telegram send failed:', await response.text());
+
+      if (!tgRes.ok) {
+        const errText = await tgRes.text();
+        console.error('Telegram failed:', errText);
       }
     } catch (err) {
-      console.error('Telegram fetch error:', err);
+      console.error('Telegram error:', err.message);
     }
   })();
 
-  next(); // Proceed to serve static files or other routes
+  next();
 });
 
-// Serve static files from repo root (index.html, css, js, etc.)
+// Serve static files
 app.use(express.static(path.join(__dirname, '.')));
 
-// Optional: SPA-style fallback for any unmatched route
+// SPA fallback
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// ─── Port & Host Setup (critical for Render!) ───
-const port = process.env.PORT || 10000;  // Render provides PORT=10000 by default
-const host = '0.0.0.0';                  // Required: listen on all interfaces
+// Port setup for Render
+const port = process.env.PORT || 10000;
+const host = '0.0.0.0';
 
 app.listen(port, host, () => {
   console.log(`Server listening on http://\( {host}: \){port}`);
