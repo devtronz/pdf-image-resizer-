@@ -1,4 +1,4 @@
-// server.js (advanced visitor logging version)
+// server.js - Advanced visitor logging + Telegram notification
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
@@ -23,21 +23,37 @@ function sha256(text) {
   return crypto.createHash('sha256').update(text).digest('hex');
 }
 
+// Trust proxy (important on Render, Railway, Vercel, etc.)
+app.set('trust proxy', true);
+
 // Advanced Middleware: Visitor logging
 app.use(async (req, res, next) => {
-  const url = new URL(req.protocol + '://' + req.get('host') + req.originalUrl);
-  const ip = req.headers['cf-connecting-ip'] ||
-             (req.headers['x-forwarded-for']?.split(',')[0]?.trim()) ||
-             req.ip ||
-             'unknown';
+  // Get real client IP (Render uses X-Forwarded-For)
+  let ip = req.headers['cf-connecting-ip'] ||
+           (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) ||
+           req.ip ||
+           req.socket.remoteAddress ||
+           'unknown';
 
-  // Rate limit: skip if same IP logged recently
+  // Clean localhost / internal IPs
+  if (ip === '::1' || ip === '127.0.0.1' || ip.startsWith('10.') || ip.startsWith('172.16.') || ip.startsWith('192.168.')) {
+    ip = 'localhost';
+  }
+
+  // Rate limit: skip logging if same IP was logged recently
   const now = Date.now();
   const lastTime = lastLogTimes.get(ip) || 0;
   if (now - lastTime < LOG_COOLDOWN_MS) {
-    return next(); // Silent skip – no log spam
+    return next(); // Silent skip
   }
   lastLogTimes.set(ip, now);
+
+  // Optional: clean up old entries (prevent memory leak)
+  if (lastLogTimes.size > 10000) {
+    for (const [key, time] of lastLogTimes) {
+      if (now - time > 24 * 60 * 60 * 1000) lastLogTimes.delete(key); // older than 24h
+    }
+  }
 
   const referer = req.headers.referer || 'direct';
   const userAgent = req.headers['user-agent'] || 'unknown';
@@ -45,11 +61,11 @@ app.use(async (req, res, next) => {
 
   const deviceType = getDeviceType(userAgent);
 
-  // Basic fingerprint (can expand later)
-  const fpSource = [userAgent, language, deviceType].join('|'); // timezone added from geo
+  // Basic fingerprint
+  let fpSource = [userAgent, language, deviceType].join('|');
   let fingerprint = sha256(fpSource);
 
-  // Default geo (fallback)
+  // Geo lookup fallback values
   let country = 'unknown';
   let city = 'unknown';
   let timezone = 'unknown';
@@ -57,8 +73,8 @@ app.use(async (req, res, next) => {
   let longitude = 'unknown';
   let isp = 'unknown';
 
-  // Fetch real geo from ipapi.co (free, no key needed for low volume)
-  if (ip !== 'unknown' && ip !== '127.0.0.1' && !ip.startsWith('::1')) {
+  // Fetch geo data from ipapi.co (free tier, no key, low volume ok)
+  if (ip !== 'unknown' && ip !== 'localhost') {
     try {
       const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
       if (geoRes.ok) {
@@ -71,20 +87,19 @@ app.use(async (req, res, next) => {
           longitude = geoData.longitude || 'unknown';
           isp       = geoData.org || geoData.asn || 'unknown';
 
-          // Improve fingerprint with geo data
+          // Enrich fingerprint with geo
           fpSource += `|\( {timezone}| \){country}`;
           fingerprint = sha256(fpSource);
         }
       }
     } catch (err) {
       console.error('Geo lookup failed:', err.message);
-      // Fallback to defaults – don't break request
     }
   }
 
-  const site = url.hostname;
-  const page = url.pathname;
-  const fullUrl = url.href;
+  const site = req.hostname;
+  const page = req.originalUrl;
+  const fullUrl = req.protocol + '://' + req.hostname + req.originalUrl;
 
   const message = `
 ━━━━━━━━━━━━━━━
@@ -114,11 +129,19 @@ app.use(async (req, res, next) => {
   // Async Telegram send (non-blocking)
   (async () => {
     try {
-      const tgRes = await fetch(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`, {
+      const tgToken = process.env.BOT_TOKEN;
+      const chatId = process.env.CHAT_ID;
+
+      if (!tgToken || !chatId) {
+        console.log('Telegram credentials missing - skipping send');
+        return;
+      }
+
+      const tgRes = await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          chat_id: process.env.CHAT_ID,
+          chat_id: chatId,
           text: message,
           parse_mode: 'Markdown'
         })
@@ -126,25 +149,27 @@ app.use(async (req, res, next) => {
 
       if (!tgRes.ok) {
         const errText = await tgRes.text();
-        console.error('Telegram failed:', errText);
+        console.error('Telegram API error:', errText);
+      } else {
+        console.log('Logged to Telegram successfully');
       }
     } catch (err) {
-      console.error('Telegram error:', err.message);
+      console.error('Telegram send failed:', err.message);
     }
   })();
 
   next();
 });
 
-// Serve static files
+// Serve static files (your frontend HTML, JS, CSS)
 app.use(express.static(path.join(__dirname, '.')));
 
-// SPA fallback
+// SPA fallback (serve index.html for all other routes)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Port setup for Render
+// Start server
 const port = process.env.PORT || 10000;
 const host = '0.0.0.0';
 
