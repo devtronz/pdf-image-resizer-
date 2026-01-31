@@ -1,4 +1,4 @@
-// server.js - Advanced visitor logging + Telegram notification
+// server.js - Advanced visitor logging with full IP geolocation sent to Telegram
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
@@ -6,7 +6,7 @@ const fetch = require('node-fetch');
 
 const app = express();
 
-// In-memory store for rate limiting logs per IP (resets on server restart)
+// In-memory rate limiting per IP (prevents Telegram spam)
 const lastLogTimes = new Map(); // IP → timestamp
 const LOG_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -23,100 +23,116 @@ function sha256(text) {
   return crypto.createHash('sha256').update(text).digest('hex');
 }
 
-// Trust proxy (important on Render, Railway, Vercel, etc.)
+// Trust proxy (essential on Render)
 app.set('trust proxy', true);
 
-// Advanced Middleware: Visitor logging
+// Global middleware - logs every visit
 app.use(async (req, res, next) => {
-  // Get real client IP (Render uses X-Forwarded-For)
+  // Get real client IP
   let ip = req.headers['cf-connecting-ip'] ||
            (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) ||
            req.ip ||
            req.socket.remoteAddress ||
            'unknown';
 
-  // Clean localhost / internal IPs
   if (ip === '::1' || ip === '127.0.0.1' || ip.startsWith('10.') || ip.startsWith('172.16.') || ip.startsWith('192.168.')) {
     ip = 'localhost';
   }
 
-  // Rate limit: skip logging if same IP was logged recently
+  // Rate limit per IP
   const now = Date.now();
   const lastTime = lastLogTimes.get(ip) || 0;
   if (now - lastTime < LOG_COOLDOWN_MS) {
-    return next(); // Silent skip
+    return next();
   }
   lastLogTimes.set(ip, now);
 
-  // Optional: clean up old entries (prevent memory leak)
+  // Clean up old entries (memory safety)
   if (lastLogTimes.size > 10000) {
-    for (const [key, time] of lastLogTimes) {
-      if (now - time > 24 * 60 * 60 * 1000) lastLogTimes.delete(key); // older than 24h
+    for (const [key, time] of lastLogTimes.entries()) {
+      if (now - time > 24 * 60 * 60 * 1000) lastLogTimes.delete(key);
     }
   }
 
-  const referer = req.headers.referer || 'direct';
-  const userAgent = req.headers['user-agent'] || 'unknown';
-  const language = req.headers['accept-language'] || 'unknown';
-
+  // Gather visit info
+  const referer    = req.headers.referer || 'direct';
+  const userAgent  = req.headers['user-agent'] || 'unknown';
+  const language   = req.headers['accept-language'] || 'unknown';
   const deviceType = getDeviceType(userAgent);
 
-  // Basic fingerprint
   let fpSource = [userAgent, language, deviceType].join('|');
   let fingerprint = sha256(fpSource);
 
-  // Geo lookup fallback values
-  let country = 'unknown';
-  let city = 'unknown';
-  let timezone = 'unknown';
-  let latitude = 'unknown';
-  let longitude = 'unknown';
-  let isp = 'unknown';
+  // ── Full IP geolocation lookup ──
+  let geoInfo = '';
+  let country = 'unknown', city = 'unknown', timezone = 'unknown', lat = 'unknown', lon = 'unknown', isp = 'unknown', org = 'unknown', as = 'unknown';
+  let mobile = 'No', proxy = 'No';
 
-  // Fetch geo data from ipapi.co (free tier, no key, low volume ok)
   if (ip !== 'unknown' && ip !== 'localhost') {
     try {
-      const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
+      const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,query,country,countryCode,regionName,region,city,zip,lat,lon,timezone,isp,org,as,mobile,proxy,hosting`);
       if (geoRes.ok) {
-        const geoData = await geoRes.json();
-        if (!geoData.error) {
-          country   = geoData.country_name || 'unknown';
-          city      = geoData.city || 'unknown';
-          timezone  = geoData.timezone || 'unknown';
-          latitude  = geoData.latitude || 'unknown';
-          longitude = geoData.longitude || 'unknown';
-          isp       = geoData.org || geoData.asn || 'unknown';
+        const data = await geoRes.json();
+        if (data.status === 'success') {
+          country = data.country || 'unknown';
+          const cc = data.countryCode || '?';
+          const regionName = data.regionName || 'unknown';
+          const region = data.region || '?';
+          city = data.city || 'unknown';
+          const zip = data.zip || 'N/A';
+          lat = data.lat || 'unknown';
+          lon = data.lon || 'unknown';
+          timezone = data.timezone || 'unknown';
+          isp = data.isp || 'unknown';
+          org = data.org || 'N/A';
+          as = data.as || 'N/A';
+          mobile = data.mobile ? 'Yes' : 'No';
+          proxy = (data.proxy || data.hosting) ? 'Yes' : 'No';
 
-          // Enrich fingerprint with geo
+          geoInfo = `
+IP Lookup (similar to whatismyipaddress.com)
+
+${data.query}
+
+🌍 Country: \( {country} ( \){cc})
+🏞 Region: \( {regionName} ( \){region})
+🏙 City: ${city}
+📮 ZIP: ${zip}
+📍 Lat/Lon: ${lat}, ${lon}
+🕒 Timezone: ${timezone}
+🌐 ISP: ${isp}
+🏢 Org: ${org}
+🔗 AS: ${as}
+📱 Mobile?: ${mobile}
+🕵️ Proxy/VPN/Hosting?: ${proxy}
+          `.trim();
+
+          // Enrich fingerprint
           fpSource += `|\( {timezone}| \){country}`;
           fingerprint = sha256(fpSource);
         }
       }
     } catch (err) {
       console.error('Geo lookup failed:', err.message);
+      geoInfo = '(Geo lookup failed)';
     }
   }
 
+  // Build the full message
   const site = req.hostname;
   const page = req.originalUrl;
   const fullUrl = req.protocol + '://' + req.hostname + req.originalUrl;
 
   const message = `
 ━━━━━━━━━━━━━━━
-🧾 *ADVANCED VISIT LOG*
+🧾 *WEBSITE VISIT LOG*
 ━━━━━━━━━━━━━━━
 
 🌐 *Site* • ${site}
 📄 *Page* • ${page}
 • ${fullUrl}
 
-🌍 *Visitor Location*
-• IP: \`${ip}\`
-• Country: ${country}
-• City: ${city}
-• Timezone: ${timezone}
-• Lat/Long: ${latitude}, ${longitude}
-• ISP: ${isp}
+${geoInfo ? '🌍 *Visitor Location*\n' + geoInfo : ''}
 
 🛠 *Device* • ${deviceType}
 🧠 *Fingerprint* • \`${fingerprint}\`
@@ -126,14 +142,14 @@ app.use(async (req, res, next) => {
 🗣 *Language* • ${language}
   `.trim();
 
-  // Async Telegram send (non-blocking)
+  // Send to Telegram (non-blocking)
   (async () => {
     try {
       const tgToken = process.env.BOT_TOKEN;
       const chatId = process.env.CHAT_ID;
 
       if (!tgToken || !chatId) {
-        console.log('Telegram credentials missing - skipping send');
+        console.log('Telegram credentials missing - skipping');
         return;
       }
 
@@ -148,10 +164,9 @@ app.use(async (req, res, next) => {
       });
 
       if (!tgRes.ok) {
-        const errText = await tgRes.text();
-        console.error('Telegram API error:', errText);
+        console.error('Telegram API error:', await tgRes.text());
       } else {
-        console.log('Logged to Telegram successfully');
+        console.log('Visit logged to Telegram');
       }
     } catch (err) {
       console.error('Telegram send failed:', err.message);
@@ -161,18 +176,16 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// Serve static files (your frontend HTML, JS, CSS)
+// Serve static files (HTML, JS, CSS, images...)
 app.use(express.static(path.join(__dirname, '.')));
 
-// SPA fallback (serve index.html for all other routes)
+// SPA / catch-all fallback
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Start server
 const port = process.env.PORT || 10000;
-const host = '0.0.0.0';
-
-app.listen(port, host, () => {
-  console.log(`Server listening on http://\( {host}: \){port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server running on port ${port}`);
 });
