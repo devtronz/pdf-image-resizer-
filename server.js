@@ -1,4 +1,4 @@
-// server.js - Fixed interpolation + full geo details in Telegram logs
+// server.js - Corrected template literals + full geo details
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
@@ -6,11 +6,10 @@ const fetch = require('node-fetch');
 
 const app = express();
 
-// Rate limiting per IP (5 min cooldown)
+// Rate limiting per IP
 const lastLogTimes = new Map();
-const LOG_COOLDOWN_MS = 5 * 60 * 1000;
+const LOG_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
 
-// Helpers
 function getDeviceType(ua = '') {
   ua = ua.toLowerCase();
   if (/bot|crawler|spider|crawling/.test(ua)) return "Bot";
@@ -26,7 +25,7 @@ function sha256(text) {
 app.set('trust proxy', true);
 
 app.use(async (req, res, next) => {
-  // Get real client IP
+  // Real IP
   let ip = req.headers['cf-connecting-ip'] ||
            (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) ||
            req.ip ||
@@ -43,22 +42,22 @@ app.use(async (req, res, next) => {
   if (now - lastTime < LOG_COOLDOWN_MS) return next();
   lastLogTimes.set(ip, now);
 
-  // Memory cleanup
+  // Cleanup
   if (lastLogTimes.size > 10000) {
-    for (const [key, time] of lastLogTimes.entries()) {
+    for (const [key, time] of lastLogTimes) {
       if (now - time > 24 * 60 * 60 * 1000) lastLogTimes.delete(key);
     }
   }
 
-  const referer    = req.headers.referer || 'direct';
-  const userAgent  = req.headers['user-agent'] || 'unknown';
-  const language   = req.headers['accept-language'] || 'unknown';
+  const referer = req.headers.referer || 'direct';
+  const userAgent = req.headers['user-agent'] || 'unknown';
+  const language = req.headers['accept-language'] || 'unknown';
   const deviceType = getDeviceType(userAgent);
 
   let fpSource = [userAgent, language, deviceType].join('|');
   let fingerprint = sha256(fpSource);
 
-  // ── IP geolocation ──
+  // Geo lookup
   let geoBlock = '(Geo lookup failed)';
   let country = 'unknown', cc = '?', regionName = 'unknown', region = '?', city = 'unknown';
   let zip = 'N/A', lat = 'unknown', lon = 'unknown', timezone = 'unknown';
@@ -109,20 +108,20 @@ IP Lookup (similar to whatismyipaddress.com)
       }
     } catch (err) {
       console.error('Geo lookup failed:', err.message);
-      geoBlock = '(Geo lookup failed)';
     }
   }
 
-  // Safe HTML fields
-  const safeIp      = `<code>${ip}</code>`;
+  // Safe HTML escaping for dynamic fields
+  const safeIp      = `<code>${ip.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`;
   const safeFp      = `<code>${fingerprint}</code>`;
   const safeUa      = `<code>${userAgent.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`;
   const safeReferer = `<code>${referer.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`;
 
-  // Build message with correct interpolation
+  // Build message (using backticks for template literals)
   const site    = req.hostname;
   const page    = req.originalUrl;
-  const fullUrl = `\( {req.protocol}:// \){req.hostname}${req.originalUrl}`;
+  const protocol = req.protocol;
+  const fullUrl = `\( {protocol}:// \){req.hostname}${req.originalUrl}`;
 
   const message = `
 ━━━━━━━━━━━━━━━
@@ -151,7 +150,7 @@ ${geoBlock}
       const chatId = process.env.CHAT_ID;
 
       if (!tgToken || !chatId) {
-        console.log('Telegram credentials missing - skipping');
+        console.log('Missing BOT_TOKEN or CHAT_ID in environment variables');
         return;
       }
 
@@ -179,15 +178,13 @@ ${geoBlock}
   next();
 });
 
-// Serve static files
+// Static files & SPA fallback
 app.use(express.static(path.join(__dirname, '.')));
 
-// Catch-all fallback
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Start server
 const port = process.env.PORT || 10000;
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);
