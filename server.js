@@ -1,4 +1,4 @@
-// server.js - Fixed version with correct HTML interpolation + safe fields
+// server.js - Fixed interpolation + full geo details in Telegram logs
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
@@ -6,7 +6,7 @@ const fetch = require('node-fetch');
 
 const app = express();
 
-// Rate limiting per IP (5 minutes cooldown)
+// Rate limiting per IP (5 min cooldown)
 const lastLogTimes = new Map();
 const LOG_COOLDOWN_MS = 5 * 60 * 1000;
 
@@ -26,7 +26,7 @@ function sha256(text) {
 app.set('trust proxy', true);
 
 app.use(async (req, res, next) => {
-  // Get real IP
+  // Get real client IP
   let ip = req.headers['cf-connecting-ip'] ||
            (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) ||
            req.ip ||
@@ -43,7 +43,7 @@ app.use(async (req, res, next) => {
   if (now - lastTime < LOG_COOLDOWN_MS) return next();
   lastLogTimes.set(ip, now);
 
-  // Cleanup old entries
+  // Memory cleanup
   if (lastLogTimes.size > 10000) {
     for (const [key, time] of lastLogTimes.entries()) {
       if (now - time > 24 * 60 * 60 * 1000) lastLogTimes.delete(key);
@@ -58,7 +58,7 @@ app.use(async (req, res, next) => {
   let fpSource = [userAgent, language, deviceType].join('|');
   let fingerprint = sha256(fpSource);
 
-  // ── Full IP geolocation ──
+  // ── IP geolocation ──
   let geoBlock = '(Geo lookup failed)';
   let country = 'unknown', cc = '?', regionName = 'unknown', region = '?', city = 'unknown';
   let zip = 'N/A', lat = 'unknown', lon = 'unknown', timezone = 'unknown';
@@ -109,18 +109,19 @@ IP Lookup (similar to whatismyipaddress.com)
       }
     } catch (err) {
       console.error('Geo lookup failed:', err.message);
+      geoBlock = '(Geo lookup failed)';
     }
   }
 
   // Safe HTML fields
-  const safeIp        = `<code>${ip}</code>`;
-  const safeFp        = `<code>${fingerprint}</code>`;
-  const safeUa        = `<code>${userAgent.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`;
-  const safeReferer   = `<code>${referer.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`;
+  const safeIp      = `<code>${ip}</code>`;
+  const safeFp      = `<code>${fingerprint}</code>`;
+  const safeUa      = `<code>${userAgent.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`;
+  const safeReferer = `<code>${referer.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`;
 
-  // Final message using HTML
-  const site = req.hostname;
-  const page = req.originalUrl;
+  // Build message with correct interpolation
+  const site    = req.hostname;
+  const page    = req.originalUrl;
   const fullUrl = `\( {req.protocol}:// \){req.hostname}${req.originalUrl}`;
 
   const message = `
