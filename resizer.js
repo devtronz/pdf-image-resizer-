@@ -98,3 +98,32 @@ function resizeImage() {
 
   reader.readAsDataURL(file);
 }
+
+
+document.getElementById('show-privacy')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.65); display:flex; align-items:center; justify-content:center; z-index:10000;';
+  modal.innerHTML = `
+    <div style="background:#1e293b; color:#e2e8f0; padding:28px; border-radius:12px; max-width:520px; width:90%; max-height:85vh; overflow-y:auto; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+      <h3 style="margin:0 0 16px; color:#60a5fa;">Privacy & Cookies</h3>
+      <p>This tool runs primarily in your browser using libraries like jsPDF and pdf.js. Files stay on your device during processing.</p>
+      
+      <h4 style="margin:20px 0 8px; color:#94a3b8;">Cookies We Use</h4>
+      <ul style="padding-left:20px; margin:8px 0 16px; line-height:1.6;">
+        <li><strong>Preference cookies</strong>: To save settings like quality level, resize options, or theme — so you don't have to re-select them every time.</li>
+        <li><strong>No other cookies</strong>: We do not use tracking, session, authentication, or any third-party cookies.</li>
+      </ul>
+      
+      <p style="margin:16px 0;">All data stays local. Nothing is sent to external servers for tracking or storage.</p>
+      
+      <p style="margin-top:24px; text-align:center;">
+        <button onclick="this.closest('div').parentElement.remove()" style="background:#3b82f6; color:white; border:none; padding:12px 28px; border-radius:8px; cursor:pointer; font-size:1rem;">
+          Close
+        </button>
+      </p>
+    </div>
+  `;
+  document.body.appendChild(modal);
+});
