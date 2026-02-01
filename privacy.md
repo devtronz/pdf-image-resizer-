@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - PDF & Image Resizer</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; color: #e2e8f0; background: #0f172a; }
+    h1, h2 { color: #60a5fa; }
+    a { color: #60a5fa; }
+  </style>
+</head>
+<body>
+  <h1>Privacy Policy</h1>
+  <p><strong>Effective Date:</strong> February 2026</p>
+
+  <p>PDF & Image Resizer is a free, open-source tool. All PDF/image resizing and compression happens **100% in your browser** using JavaScript (jsPDF, pdf.js, etc.).</p>
+
+  <h2>File Processing</h2>
+  <p>Your files never leave your device. We do not upload, store, or access them on any server.</p>
+
+  <h2>No User Tracking</h2>
+  <p>We do <strong>not</strong> track users in any way:</p>
+  <ul>
+    <li>No IP addresses are logged or stored</li>
+    <li>No browser details (User-Agent), location, device info, or fingerprints collected</li>
+    <li>No analytics, tracking scripts, or third-party services used</li>
+    <li>No data sent to Telegram or any external service</li>
+  </ul>
+  <p>The server only serves static files (HTML, JS, CSS) and does not record or process any visitor information.</p>
+
+  <h2>Cookies & Storage</h2>
+  <p>The server sets no cookies.</p>
+  <p>If the tool remembers preferences (e.g. quality setting, dimensions) via client-side code, it uses first-party cookies or localStorage — stored only on your device, never sent anywhere.</p>
+
+  <h2>Third Parties</h2>
+  <p>None. No external requests or services involved in tracking or data collection.</p>
+
+  <h2>Contact</h2>
+  <p>Questions? Open an issue on GitHub: <a href="https://github.com/devtronz/pdf-image-resizer-/issues">github.com/devtronz/pdf-image-resizer-/issues</a></p>
+
+  <p style="margin-top: 3rem; text-align: center; color: #94a3b8;">No tracking. Your files and activity stay private.</p>
+</body>
+</html>
