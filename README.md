@@ -1,39 +1,25 @@
-# PDF & Image Resizer
+# PDF & Image Resizer + Converter
 
-**Offline browser tool** to resize/compress images and convert photos to PDF — no uploads, no tracking, everything stays on your device.
+**Offline, privacy-first web tool and library**  
+Resize images, compress them to target file size, and convert multiple photos to a single PDF — all 100% in your browser. No uploads, no tracking, no third-party servers.
 
-Live demo: https://pdf-image-resizer.onrender.com/index.html
+**Live demo**: [https://your-render-url.onrender.com](https://your-render-url.onrender.com) (replace with your actual hosted link)
 
-GitHub: https://github.com/devtronz/pdf-image-resizer-
+**GitHub**: https://github.com/devtronz/pdf-image-resizer-
 
 ## Features
 
-- Resize images to exact width/height (aspect ratio preserved)
-- Compress images iteratively to target file size (KB/MB)
-- Preview original & resized image
-- Download resized JPEG
-- Convert multiple images to single PDF (coming soon / in progress)
-- 100% client-side — no server processing of your files
-- No tracking, no analytics, no third-party requests
-- Privacy-focused: only optional first-party localStorage/cookies for UI preferences (if added later)
-
-## Screenshots
-
-(Add screenshots here later if you want — e.g. before/after resize, progress bar, download button)
-
-## How to Use (Web Version)
-
-1. Open the site
-2. Select an image (or multiple for PDF later)
-3. Set target width/height and/or max size
-4. Click **Resize & Compress**
-5. Preview result → click **Download**
-
-All processing uses browser Canvas + JPEG export.
+- Resize images to custom width/height (aspect ratio preserved)
+- Iteratively compress JPEGs until they meet a target file size (KB/MB)
+- Convert one or multiple images into a single PDF (A4 pages, centered, fit-to-page)
+- Real-time progress bar & previews
+- Download results as JPEG or PDF
+- 100% client-side — files never leave your device
+- No analytics, no cookies (except optional first-party for preferences later), no tracking
 
 ## NPM Package (Reusable Library)
 
-The core resize/compress logic is available as a small, modular package:
+The core processing logic is published as a small, modular package:
 
 ```bash
 npm install @devtronz/image-resize-compress
