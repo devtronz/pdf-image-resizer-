@@ -110,11 +110,6 @@ document.getElementById('show-privacy')?.addEventListener('click', (e) => {
       <h3 style="margin:0 0 16px; color:#60a5fa;">Privacy & Cookies</h3>
       <p>This tool runs primarily in your browser using libraries like jsPDF and pdf.js. Files stay on your device during processing.</p>
       
-      <h4 style="margin:20px 0 8px; color:#94a3b8;">Cookies We Use</h4>
-      <ul style="padding-left:20px; margin:8px 0 16px; line-height:1.6;">
-        <li><strong>Preference cookies</strong>: To save settings like quality level, resize options, or theme — so you don't have to re-select them every time.</li>
-        <li><strong>No other cookies</strong>: We do not use tracking, session, authentication, or any third-party cookies.</li>
-      </ul>
       
       <p style="margin:16px 0;">All data stays local. Nothing is sent to external servers for tracking or storage.</p>
       
