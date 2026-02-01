@@ -1,15 +1,42 @@
 {
-  "name": "pdf-image-resizer",
-  "version": "1.0.0",
-  "main": "server.js",
+  "name": "@devtronz/image-resize-compress",
+  "version": "0.1.0",
+  "description": "Browser-only library to resize images and compress them to a target file size (JPEG output)",
+  "main": "index.js",
+  "type": "module",
+  "module": "index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "echo \"No tests yet – add later if needed\""
   },
-  "dependencies": {
-    "express": "^4.18.2",
-    "node-fetch": "^2.6.7"
+  "keywords": [
+    "image",
+    "resize",
+    "compress",
+    "jpeg",
+    "browser",
+    "offline",
+    "canvas"
+  ],
+  "author": "Dhsks",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devtronz/pdf-image-resizer-.git"
   },
-  "engines": {
-    "node": ">=14"
+  "bugs": {
+    "url": "https://github.com/devtronz/pdf-image-resizer-/issues"
+  },
+  "homepage": "https://github.com/devtronz/pdf-image-resizer-#readme",
+  "publishConfig": {
+    "access": "public"
   }
 }
