@@ -1,42 +1,24 @@
-name: Publish to npm
+name: Publish to npm (public)
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - main
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write          # ← changed: allow commit
-      id-token: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}   # allows commit back
+          node-version: 18
+          registry-url: https://registry.npmjs.org/
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
+      - run: npm install
 
-      - name: Install dependencies & generate lockfile if missing
-        run: |
-          if [ ! -f package-lock.json ]; then
-            npm install
-            git config user.name "GitHub Actions"
-            git config user.email "actions@github.com"
-            git add package-lock.json
-            git commit -m "Auto-generate package-lock.json during first publish" || echo "No changes to commit"
-            git push
-          else
-            npm ci
-          fi
-
-      - name: Publish package
-        run: npm publish --provenance --access public
+      - run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
