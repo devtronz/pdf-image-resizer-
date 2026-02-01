@@ -1,7 +1,7 @@
 {
   "name": "@devtronz/image-resize-compress",
   "version": "0.1.0",
-  "description": "Browser-only library to resize images and compress them to a target file size (JPEG output)",
+  "description": "Lightweight browser library for resizing images and compressing them to a target file size using canvas (JPEG output)",
   "main": "index.js",
   "type": "module",
   "module": "index.js",
@@ -15,16 +15,17 @@
   ],
   "scripts": {
     "start": "node server.js",
-    "test": "echo \"No tests yet – add later if needed\""
+    "test": "echo \"No tests yet\"",
+    "pack-dry": "npm pack --dry-run"
   },
   "keywords": [
     "image",
     "resize",
     "compress",
     "jpeg",
+    "canvas",
     "browser",
-    "offline",
-    "canvas"
+    "offline"
   ],
   "author": "Dhsks",
   "license": "MIT",
