@@ -1,7 +1,7 @@
-// index.js - Core export for the future npm package
+// index.js – reusable functions for image processing
 
 /**
- * Loads an image file into an HTMLImageElement
+ * Loads a File into an Image object
  * @param {File} file - The input image file
  * @returns {Promise<HTMLImageElement>}
  */
@@ -21,14 +21,14 @@ export function loadImage(file) {
 
 /**
  * Resizes and compresses an image to target dimensions and/or file size
- * @param {File} file - Input image file (JPEG, PNG, etc.)
+ * @param {File} file - Input image file
  * @param {Object} options - Configuration
- * @param {number} [options.targetWidth] - Desired width in pixels (height auto-scaled)
- * @param {number} [options.targetHeight] - Desired height in pixels (width auto-scaled)
- * @param {number} [options.targetSizeKB] - Target maximum file size in KB
- * @param {number} [options.initialQuality=0.92] - Starting JPEG quality (0.1 to 1.0)
- * @param {number} [options.minQuality=0.1] - Lowest allowed quality before stopping
- * @returns {Promise<Blob>} - The final compressed JPEG Blob
+ * @param {number} [options.targetWidth] - Desired width (pixels)
+ * @param {number} [options.targetHeight] - Desired height (pixels)
+ * @param {number} [options.targetSizeKB] - Target max size in KB
+ * @param {number} [options.initialQuality=0.92] - Starting JPEG quality
+ * @param {number} [options.minQuality=0.1] - Lowest allowed quality
+ * @returns {Promise<Blob>} Compressed JPEG Blob
  */
 export async function resizeAndCompressImage(file, options = {}) {
   const {
@@ -39,10 +39,8 @@ export async function resizeAndCompressImage(file, options = {}) {
     minQuality = 0.1
   } = options;
 
-  // Step 1: Load image
   const img = await loadImage(file);
 
-  // Step 2: Calculate new dimensions (preserve aspect ratio)
   let width = img.width;
   let height = img.height;
 
@@ -50,34 +48,30 @@ export async function resizeAndCompressImage(file, options = {}) {
     width = targetWidth;
     height = Math.round(img.height * (width / img.width));
   }
-
   if (targetHeight) {
     height = targetHeight;
     width = Math.round(img.width * (height / img.height));
   }
 
-  // Step 3: Draw on canvas
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
   ctx.drawImage(img, 0, 0, width, height);
 
-  // Step 4: Iterative compression to meet target size
   let quality = Math.max(initialQuality, minQuality);
   let blob;
 
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     blob = await new Promise(resolve => {
       canvas.toBlob(resolve, 'image/jpeg', quality);
     });
 
-    // Stop if: no target size OR size is good OR quality is too low
     if (!targetSizeKB || blob.size <= targetSizeKB * 1024 || quality <= minQuality) {
       break;
     }
 
-    // Reduce quality more aggressively if needed
     quality -= 0.05;
     if (quality < minQuality) quality = minQuality;
   }
@@ -85,7 +79,11 @@ export async function resizeAndCompressImage(file, options = {}) {
   return blob;
 }
 
-// Optional helper: create object URL for preview/download
+/**
+ * Creates a temporary object URL for preview/download
+ * @param {Blob} blob
+ * @returns {string}
+ */
 export function createObjectURL(blob) {
   return URL.createObjectURL(blob);
 }
