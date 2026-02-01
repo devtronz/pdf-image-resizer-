@@ -8,12 +8,14 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write          # ← changed: allow commit
       id-token: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}   # allows commit back
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -21,9 +23,18 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install dependencies
+      - name: Install dependencies & generate lockfile if missing
         run: |
-          npm ci || npm install
+          if [ ! -f package-lock.json ]; then
+            npm install
+            git config user.name "GitHub Actions"
+            git config user.email "actions@github.com"
+            git add package-lock.json
+            git commit -m "Auto-generate package-lock.json during first publish" || echo "No changes to commit"
+            git push
+          else
+            npm ci
+          fi
 
       - name: Publish package
         run: npm publish --provenance --access public
