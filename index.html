@@ -18,19 +18,33 @@
   <!-- SELECT IMAGES -->
   <section class="card">
     <h2>1. Select Images</h2>
-    <input type="file" id="images" accept="image/*" multiple>
-    <p class="hint">You can select multiple images</p>
+    <input type="file" id="img" accept="image/*">
+    <p class="hint">Select one image for resize test</p>
   </section>
 
   <!-- PREVIEW -->
   <section class="card">
-    <h2>Preview Order</h2>
-    <div id="previewList" class="preview-list"></div>
+    <h2>Preview</h2>
+    <img id="originalPreview" alt="Original" style="max-width:300px;">
+    <img id="resizedPreview" alt="Resized" style="max-width:300px;">
+  </section>
+
+  <!-- CONTROLS -->
+  <section class="card">
+    <label>Target Width (px): <input type="number" id="width" placeholder="e.g. 800"></label><br>
+    <label>Target Height (px): <input type="number" id="height" placeholder="e.g. 600"></label><br>
+    <label>Target Size: 
+      <input type="number" id="sizeValue" placeholder="e.g. 200">
+      <select id="sizeUnit">
+        <option value="kb">KB</option>
+        <option value="mb">MB</option>
+      </select>
+    </label>
   </section>
 
   <!-- ACTION -->
   <section class="card action">
-    <button onclick="makePDF()">Convert to PDF</button>
+    <button id="resizeBtn">Resize & Compress</button>
 
     <div class="progress-wrapper">
       <div id="progressText">Idle</div>
@@ -38,33 +52,119 @@
         <div id="progressFill"></div>
       </div>
     </div>
-  </section>
 
-  <footer>
-    <a href="image-resizer.html">Go to Image Resizer →</a>
-  </footer>
+    <a id="download" href="#" download="resized.jpg" style="display:block; margin-top:10px;">Download</a>
+  </section>
 
 </div>
 
-<script src="jspdf.umd.min.js"></script>
-<script src="pdf.js"></script>
+<!-- Privacy modal script (your existing one) -->
+<script>
+document.getElementById('show-privacy')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.65); display:flex; align-items:center; justify-content:center; z-index:10000;';
+  modal.innerHTML = `
+    <div style="background:#1e293b; color:#e2e8f0; padding:28px; border-radius:12px; max-width:520px; width:90%; max-height:85vh; overflow-y:auto; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+      <h3 style="margin:0 0 16px; color:#60a5fa;">Privacy & Cookies</h3>
+      <p>This tool runs primarily in your browser using libraries like jsPDF and pdf.js. Files stay on your device during processing.</p>
+      <p style="margin:16px 0;">All data stays local. Nothing is sent to external servers for tracking or storage.</p>
+      <p style="margin-top:24px; text-align:center;">
+        <button onclick="this.closest('div').parentElement.remove()" style="background:#3b82f6; color:white; border:none; padding:12px 28px; border-radius:8px; cursor:pointer; font-size:1rem;">
+          Close
+        </button>
+      </p>
+    </div>
+  `;
+  document.body.appendChild(modal);
+});
+</script>
+
+<!-- Main resize logic using module -->
+<script type="module">
+  import { resizeAndCompressImage, createObjectURL } from './index.js';
+
+  const originalPreview = document.getElementById("originalPreview");
+  const resizedPreview = document.getElementById("resizedPreview");
+  const progressFill = document.getElementById("progressFill");
+  const progressText = document.getElementById("progressText");
+
+  function setProgress(percent, text) {
+    progressFill.style.width = percent + "%";
+    progressText.textContent = text;
+  }
+
+  // File preview
+  document.getElementById("img").addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setProgress(5, "Image selected");
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      originalPreview.src = reader.result;
+      resizedPreview.src = "";
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Resize button
+  document.getElementById("resizeBtn").addEventListener("click", async () => {
+    const file = document.getElementById("img").files[0];
+    if (!file) return alert("Select an image first");
+
+    setProgress(10, "Loading image…");
+
+    try {
+      const sizeValue = document.getElementById("sizeValue").value;
+      const sizeUnit = document.getElementById("sizeUnit").value;
+      const targetWidth = document.getElementById("width").value;
+      const targetHeight = document.getElementById("height").value;
+
+      let targetSizeKB = null;
+      if (sizeValue) {
+        targetSizeKB = sizeUnit === "mb" ? sizeValue * 1024 : Number(sizeValue);
+      }
+
+      const blob = await resizeAndCompressImage(file, {
+        targetWidth: targetWidth ? Number(targetWidth) : undefined,
+        targetHeight: targetHeight ? Number(targetHeight) : undefined,
+        targetSizeKB: targetSizeKB,
+        initialQuality: 0.92,
+        minQuality: 0.1
+      });
+
+      const url = createObjectURL(blob);
+      resizedPreview.src = url;
+
+      const link = document.getElementById("download");
+      link.href = url;
+      link.download = "resized-" + file.name;
+      link.textContent = `Download (${Math.round(blob.size / 1024)} KB)`;
+      link.style.display = "block";
+
+      setProgress(100, "Done! Ready to download");
+    } catch (err) {
+      console.error(err);
+      setProgress(0, "Error: " + err.message);
+      alert("Resize failed: " + err.message);
+    }
+  });
+</script>
 
 <footer style="background: #0f172a; color: #94a3b8; text-align: center; padding: 24px 16px; font-size: 0.95rem; margin-top: 60px; border-top: 1px solid #334155;">
   <p><strong>PDF & Image Resizer</strong> – Everything processes right in your browser. Your files are never uploaded, stored, or shared.</p>
-  
-  
-  
   <p>
-    <p>
-  <a href="privacy.html" style="color: #60a5fa; text-decoration: none; font-weight: 500;">Privacy Policy</a>
-  •
-  <a href="https://github.com/devtronz/pdf-image-resizer-" style="color: #60a5fa; text-decoration: none;">GitHub Repository</a>
-</p>
-   
-  
+    <a href="#" id="show-privacy" style="color: #60a5fa; text-decoration: none; font-weight: 500;">Privacy & Cookies Details</a>
+    •
+    <a href="https://github.com/devtronz/pdf-image-resizer-" style="color: #60a5fa; text-decoration: none;">GitHub Repository</a>
+  </p>
   <p style="margin-top: 12px; font-size: 0.9rem; opacity: 0.8;">
     Open source project © 2026
   </p>
 </footer>
+
 </body>
 </html>
