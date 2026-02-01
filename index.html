@@ -2,229 +2,67 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Image Resizer & PDF Converter</title>
+  <title>Photo to PDF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
-  <style>
-    body { font-family: system-ui, sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; padding: 20px; }
-    .container { max-width: 900px; margin: 0 auto; }
-    .card { background: #1e293b; border-radius: 12px; padding: 20px; margin: 20px 0; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-    h1, h2 { color: #60a5fa; }
-    input, button, select { padding: 10px; margin: 8px 0; border-radius: 6px; }
-    button { background: #3b82f6; color: white; border: none; cursor: pointer; font-weight: 500; }
-    button:hover { background: #2563eb; }
-    img { max-width: 100%; border-radius: 8px; margin: 10px 0; }
-    .progress-bar { height: 8px; background: #334155; border-radius: 4px; overflow: hidden; }
-    #progressFill { height: 100%; background: #60a5fa; width: 0%; transition: width 0.3s; }
-    footer { text-align: center; padding: 30px 0; color: #94a3b8; font-size: 0.95rem; }
-    a { color: #60a5fa; text-decoration: none; }
-    #download { display: none; margin-top: 15px; font-weight: 500; }
-  </style>
 </head>
 <body>
 
 <div class="container">
 
-  <header style="text-align: center; margin-bottom: 30px;">
-    <h1>Image Resizer & PDF Converter</h1>
-    <p style="color: #94a3b8;">Offline • No uploads • No tracking</p>
+  <header>
+    <h1>Photo to PDF</h1>
+    <p class="subtitle">Convert multiple images into one PDF (offline)</p>
   </header>
 
-  <!-- File Input -->
+  <!-- SELECT IMAGES -->
   <section class="card">
     <h2>1. Select Images</h2>
-    <input type="file" id="img" accept="image/*" multiple>
-    <p style="color: #94a3b8; font-size: 0.9rem;">You can select multiple images (PDF mode)</p>
+    <input type="file" id="images" accept="image/*" multiple>
+    <p class="hint">You can select multiple images</p>
   </section>
 
-  <!-- Previews -->
+  <!-- PREVIEW -->
   <section class="card">
-    <h2>Preview</h2>
-    <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
-      <div>
-        <p>Original</p>
-        <img id="originalPreview" alt="Original preview" style="max-height: 300px;">
-      </div>
-      <div>
-        <p>Result</p>
-        <img id="resizedPreview" alt="Result preview" style="max-height: 300px;">
-      </div>
-    </div>
+    <h2>Preview Order</h2>
+    <div id="previewList" class="preview-list"></div>
   </section>
 
-  <!-- Controls -->
-  <section class="card">
-    <h2>Options</h2>
-    <div style="display: flex; flex-wrap: wrap; gap: 15px;">
-      <div>
-        <label>Target Width (px):</label><br>
-        <input type="number" id="width" placeholder="e.g. 800">
-      </div>
-      <div>
-        <label>Target Height (px):</label><br>
-        <input type="number" id="height" placeholder="e.g. 600">
-      </div>
-      <div>
-        <label>Target Size:</label><br>
-        <input type="number" id="sizeValue" placeholder="e.g. 200">
-        <select id="sizeUnit">
-          <option value="kb">KB</option>
-          <option value="mb">MB</option>
-        </select>
-      </div>
-    </div>
-  </section>
+  <!-- ACTION -->
+  <section class="card action">
+    <button onclick="makePDF()">Convert to PDF</button>
 
-  <!-- Actions -->
-  <section class="card action" style="text-align: center;">
-    <button id="resizeBtn">Resize & Compress</button>
-    <button id="pdfBtn" style="margin-left: 15px;">Convert to PDF</button>
-
-    <div style="margin: 20px 0;">
-      <div id="progressText" style="margin-bottom: 8px;">Idle</div>
+    <div class="progress-wrapper">
+      <div id="progressText">Idle</div>
       <div class="progress-bar">
         <div id="progressFill"></div>
       </div>
     </div>
-
-    <a id="download" href="#" download style="display: none; color: #60a5fa; font-weight: 500;">
-      Download Result
-    </a>
   </section>
+
+  <footer>
+    <a href="image-resizer.html">Go to Image Resizer →</a>
+  </footer>
 
 </div>
 
-<!-- Footer -->
-<footer>
-  <p><strong>PDF & Image Resizer</strong> – All processing in your browser • Files never uploaded</p>
+<script src="jspdf.umd.min.js"></script>
+<script src="pdf.js"></script>
+
+<footer style="background: #0f172a; color: #94a3b8; text-align: center; padding: 24px 16px; font-size: 0.95rem; margin-top: 60px; border-top: 1px solid #334155;">
+  <p><strong>PDF & Image Resizer</strong> – Everything processes right in your browser. Your files are never uploaded, stored, or shared.</p>
+  
+  
+  
   <p>
-    <a href="#" id="show-privacy">Privacy & Cookies Details</a>
+    <a href="#" id="show-privacy" style="color: #60a5fa; text-decoration: none; font-weight: 500;">Privacy & Cookies Details</a>
     •
-    <a href="https://github.com/devtronz/pdf-image-resizer-" target="_blank">GitHub</a>
+    <a href="https://github.com/devtronz/pdf-image-resizer-" style="color: #60a5fa; text-decoration: none;">GitHub Repository</a>
   </p>
-  <p style="font-size: 0.85rem; opacity: 0.8;">Open source © 2026</p>
+  
+  <p style="margin-top: 12px; font-size: 0.9rem; opacity: 0.8;">
+    Open source project © 2026
+  </p>
 </footer>
-
-<!-- Privacy Modal -->
-<script>
-document.getElementById('show-privacy')?.addEventListener('click', e => {
-  e.preventDefault();
-  const modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;';
-  modal.innerHTML = `
-    <div style="background:#1e293b;color:#e2e8f0;padding:28px;border-radius:12px;max-width:520px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 10px 30px rgba(0,0,0,0.5);">
-      <h3 style="margin:0 0 16px;color:#60a5fa;">Privacy & Cookies</h3>
-      <p>This tool runs 100% in your browser. No files are uploaded or stored on any server.</p>
-      <p>No tracking, no analytics, no third-party requests. All data stays local.</p>
-      <p style="margin-top:24px;text-align:center;">
-        <button onclick="this.closest('div').parentElement.remove()" style="background:#3b82f6;color:white;border:none;padding:12px 28px;border-radius:8px;cursor:pointer;">
-          Close
-        </button>
-      </p>
-    </div>
-  `;
-  document.body.appendChild(modal);
-});
-</script>
-
-<!-- Main logic -->
-<script type="module">
-  import { resizeAndCompressImage, imagesToPDF, createObjectURL } from './index.js';
-
-  const originalPreview = document.getElementById("originalPreview");
-  const resizedPreview = document.getElementById("resizedPreview");
-  const progressFill = document.getElementById("progressFill");
-  const progressText = document.getElementById("progressText");
-  const downloadLink = document.getElementById("download");
-
-  function setProgress(percent, text) {
-    progressFill.style.width = percent + "%";
-    progressText.textContent = text;
-  }
-
-  // File preview (first image only)
-  document.getElementById("img").addEventListener("change", e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setProgress(5, "Image(s) selected");
-    const reader = new FileReader();
-    reader.onload = () => originalPreview.src = reader.result;
-    reader.readAsDataURL(file);
-    resizedPreview.src = "";
-    downloadLink.style.display = "none";
-  });
-
-  // Resize single image
-  document.getElementById("resizeBtn").addEventListener("click", async () => {
-    const file = document.getElementById("img").files[0];
-    if (!file) return alert("Select an image first");
-
-    setProgress(10, "Processing image…");
-
-    try {
-      const sizeValue = document.getElementById("sizeValue").value;
-      const sizeUnit = document.getElementById("sizeUnit").value;
-      const targetWidth = document.getElementById("width").value;
-      const targetHeight = document.getElementById("height").value;
-
-      let targetSizeKB = null;
-      if (sizeValue) {
-        targetSizeKB = sizeUnit === "mb" ? sizeValue * 1024 : Number(sizeValue);
-      }
-
-      const blob = await resizeAndCompressImage(file, {
-        targetWidth: targetWidth ? Number(targetWidth) : undefined,
-        targetHeight: targetHeight ? Number(targetHeight) : undefined,
-        targetSizeKB,
-        initialQuality: 0.92,
-        minQuality: 0.1
-      });
-
-      const url = createObjectURL(blob);
-      resizedPreview.src = url;
-
-      downloadLink.href = url;
-      downloadLink.download = "resized-" + file.name;
-      downloadLink.textContent = `Download (${Math.round(blob.size / 1024)} KB)`;
-      downloadLink.style.display = "block";
-
-      setProgress(100, "Done!");
-    } catch (err) {
-      console.error(err);
-      setProgress(0, "Error: " + err.message);
-    }
-  });
-
-  // Convert to PDF (multiple images)
-  document.getElementById("pdfBtn").addEventListener("click", async () => {
-    const files = Array.from(document.getElementById("img").files);
-    if (files.length === 0) return alert("Select at least one image");
-
-    setProgress(10, "Preparing PDF…");
-
-    try {
-      const pdfBlob = await imagesToPDF(files, {
-        pageWidth: 595,
-        pageHeight: 842,
-        fitToPage: true,
-        quality: 0.85,
-        margin: 30
-      });
-
-      const url = createObjectURL(pdfBlob);
-      resizedPreview.src = ""; // optional - hide image preview
-      downloadLink.href = url;
-      downloadLink.download = "images-to-pdf.pdf";
-      downloadLink.textContent = `Download PDF (${Math.round(pdfBlob.size / 1024)} KB)`;
-      downloadLink.style.display = "block";
-
-      setProgress(100, "PDF ready!");
-    } catch (err) {
-      console.error(err);
-      setProgress(0, "Error: " + err.message);
-    }
-  });
-</script>
-
 </body>
 </html>
