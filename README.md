@@ -2,7 +2,7 @@
 
 **Offline browser tool** to resize/compress images and convert photos to PDF — no uploads, no tracking, everything stays on your device.
 
-Live demo: [https://your-render-url.onrender.com](https://your-render-url.onrender.com) (replace with your actual Render link)
+Live demo: https://pdf-image-resizer.onrender.com/index.html
 
 GitHub: https://github.com/devtronz/pdf-image-resizer-
 
