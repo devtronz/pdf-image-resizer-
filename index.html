@@ -1,68 +1,139 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
-  <title>Photo to PDF</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Image Resizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+    .glass-dark {
+      background: rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .drop-zone {
+      transition: all 0.3s ease;
+    }
+    .drop-zone.dragover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.02);
+    }
+  </style>
 </head>
-<body>
-
-<div class="container">
-
-  <header>
-    <h1>Photo to PDF</h1>
-    <p class="subtitle">Convert multiple images into one PDF (offline)</p>
-  </header>
-
-  <!-- SELECT IMAGES -->
-  <section class="card">
-    <h2>1. Select Images</h2>
-    <input type="file" id="images" accept="image/*" multiple>
-    <p class="hint">You can select multiple images</p>
-  </section>
-
-  <!-- PREVIEW -->
-  <section class="card">
-    <h2>Preview Order</h2>
-    <div id="previewList" class="preview-list"></div>
-  </section>
-
-  <!-- ACTION -->
-  <section class="card action">
-    <button onclick="makePDF()">Convert to PDF</button>
-
-    <div class="progress-wrapper">
-      <div id="progressText">Idle</div>
-      <div class="progress-bar">
-        <div id="progressFill"></div>
+<body class="text-white">
+  <div class="max-w-5xl mx-auto p-6">
+    <!-- Header -->
+    <header class="flex justify-between items-center mb-10">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-file-pdf text-4xl"></i>
+        <h1 class="text-3xl font-bold tracking-tight">PDF Image Resizer</h1>
       </div>
+      <button id="theme-toggle" class="glass px-4 py-2 rounded-2xl flex items-center gap-2 hover:scale-105 transition">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+    </header>
+
+    <!-- Main Glass Card -->
+    <div class="glass dark:glass-dark rounded-3xl p-8 md:p-12">
+      <!-- Drag & Drop -->
+      <div id="drop-zone" class="drop-zone glass dark:glass-dark border-2 border-dashed border-white/50 rounded-2xl p-12 text-center cursor-pointer">
+        <i class="fa-solid fa-cloud-arrow-up text-6xl mb-4 opacity-70"></i>
+        <p class="text-xl font-medium mb-2">Drop PDF or Images here</p>
+        <p class="text-white/70">or</p>
+        <button class="mt-4 bg-white/20 hover:bg-white/30 px-8 py-3 rounded-2xl font-semibold transition">Browse Files</button>
+        <input type="file" id="file-input" class="hidden" multiple accept=".pdf,.jpg,.jpeg,.png">
+      </div>
+
+      <!-- Options -->
+      <div class="grid md:grid-cols-3 gap-6 mt-10">
+        <div class="glass dark:glass-dark rounded-2xl p-6">
+          <h3 class="font-semibold mb-4">Resize Options</h3>
+          <label class="block text-sm mb-2">Scale (%)</label>
+          <input type="range" min="10" max="200" value="100" class="w-full accent-white">
+          <div class="flex justify-between text-sm mt-1">
+            <span>10%</span><span id="scale-value">100%</span><span>200%</span>
+          </div>
+        </div>
+
+        <div class="glass dark:glass-dark rounded-2xl p-6">
+          <h3 class="font-semibold mb-4">Target Size</h3>
+          <select class="w-full bg-white/10 rounded-xl p-3">
+            <option>A4 (Standard)</option>
+            <option>Letter</option>
+            <option>Custom</option>
+          </select>
+        </div>
+
+        <div class="glass dark:glass-dark rounded-2xl p-6">
+          <h3 class="font-semibold mb-4">DPI / Quality</h3>
+          <div class="flex gap-4">
+            <button class="flex-1 py-3 rounded-2xl bg-white/10 hover:bg-white/20">Low</button>
+            <button class="flex-1 py-3 rounded-2xl bg-white/20">Medium</button>
+            <button class="flex-1 py-3 rounded-2xl bg-white/10 hover:bg-white/20">High</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview & Action -->
+      <div class="mt-10 flex flex-col md:flex-row gap-8">
+        <div class="flex-1 glass dark:glass-dark rounded-2xl p-6">
+          <p class="text-sm opacity-70 mb-4">Before</p>
+          <div id="preview-before" class="bg-black/30 rounded-xl h-64 flex items-center justify-center text-white/50">Preview appears here</div>
+        </div>
+        <div class="flex-1 glass dark:glass-dark rounded-2xl p-6">
+          <p class="text-sm opacity-70 mb-4">After</p>
+          <div id="preview-after" class="bg-black/30 rounded-xl h-64 flex items-center justify-center text-white/50">Processed preview</div>
+        </div>
+      </div>
+
+      <button id="process-btn" class="mt-10 w-full bg-white text-purple-700 font-bold py-5 rounded-3xl text-lg hover:scale-105 transition shadow-xl">
+        Resize & Download
+      </button>
     </div>
-  </section>
 
-  <footer>
-    <a href="image-resizer.html">Go to Image Resizer →</a>
-  </footer>
+    <!-- Footer Info -->
+    <p class="text-center text-white/50 mt-8 text-sm">All processing happens in your browser • Privacy first</p>
+  </div>
 
-</div>
+  <script>
+    // Tailwind script + basic JS for drag/drop, theme toggle, etc.
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const themeToggle = document.getElementById('theme-toggle');
 
-<script src="jspdf.umd.min.js"></script>
-<script src="pdf.js"></script>
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      console.log('Files dropped:', e.dataTransfer.files);
+      // Handle files here
+    });
 
-<footer style="background: #0f172a; color: #94a3b8; text-align: center; padding: 24px 16px; font-size: 0.95rem; margin-top: 60px; border-top: 1px solid #334155;">
-  <p><strong>PDF & Image Resizer</strong> – Everything processes right in your browser. Your files are never uploaded, stored, or shared.</p>
-  
-  
-  
-  <p>
-    <a href="#" id="show-privacy" style="color: #60a5fa; text-decoration: none; font-weight: 500;">Privacy & Cookies Details</a>
-    •
-    <a href="https://github.com/devtronz/pdf-image-resizer-" style="color: #60a5fa; text-decoration: none;">GitHub Repository</a>
-  </p>
-  
-  <p style="margin-top: 12px; font-size: 0.9rem; opacity: 0.8;">
-    Open source project © 2026
-  </p>
-</footer>
+    // Theme toggle (dark/light)
+    themeToggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+    });
+
+    // Range slider value
+    document.querySelector('input[type="range"]').addEventListener('input', function() {
+      document.getElementById('scale-value').textContent = this.value + '%';
+    });
+  </script>
 </body>
 </html>
