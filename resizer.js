@@ -1,4 +1,4 @@
-// resizer.js – Clean, working image resizer
+// resizer.js – Clean & error-free
 
 const originalPreview = document.getElementById("originalPreview");
 const resizedPreview  = document.getElementById("resizedPreview");
@@ -9,14 +9,14 @@ const downloadBtn     = document.getElementById("downloadBtn");
 const qualitySlider   = document.getElementById("qualitySlider");
 const qualityValue    = document.getElementById("qualityValue");
 
-// Update quality label
+// Quality label
 if (qualitySlider && qualityValue) {
   qualitySlider.addEventListener("input", () => {
     qualityValue.textContent = qualitySlider.value + "%";
   });
 }
 
-// Show/hide custom ratio inputs
+// Custom ratio toggle
 const aspectSelect = document.getElementById("aspectRatio");
 const customRatioInputs = document.getElementById("customRatioInputs");
 if (aspectSelect && customRatioInputs) {
@@ -32,19 +32,19 @@ function setProgress(percent, text) {
   if (progressText) progressText.textContent = text;
 }
 
-// File selected → show original preview
+// Show original preview
 document.getElementById("img")?.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
   setProgress(5, "Image selected");
-  resultInfo.style.display = "none";
-  downloadBtn.style.display = "none";
-  resizedPreview.src = "";
+  if (resultInfo) resultInfo.style.display = "none";
+  if (downloadBtn) downloadBtn.style.display = "none";
+  if (resizedPreview) resizedPreview.src = "";
 
   const reader = new FileReader();
   reader.onload = () => {
-    originalPreview.src = reader.result;
+    if (originalPreview) originalPreview.src = reader.result;
   };
   reader.readAsDataURL(file);
 });
@@ -52,16 +52,16 @@ document.getElementById("img")?.addEventListener("change", (e) => {
 // Aspect ratio helper
 function getAspectRatio(mode, customW = 16, customH = 9) {
   switch (mode) {
-    case "square":          return 1;
-    case "landscape_16_9":  return 16 / 9;
-    case "photo_4_3":       return 4 / 3;
-    case "portrait_9_16":   return 9 / 16;
-    case "custom":          return customW / customH;
-    default:                return null; // free
+    case "square":         return 1;
+    case "landscape_16_9": return 16 / 9;
+    case "photo_4_3":      return 4 / 3;
+    case "portrait_9_16":  return 9 / 16;
+    case "custom":         return customW / customH;
+    default:               return null;
   }
 }
 
-// Convert canvas → Blob (Promise)
+// Canvas → Blob
 function canvasToBlob(canvas, type, quality) {
   return new Promise((resolve) => {
     canvas.toBlob(resolve, type, quality);
@@ -81,35 +81,29 @@ async function resizeImage() {
   setProgress(10, "Loading image…");
 
   try {
-    // Read settings
-    const targetWidth   = parseInt(document.getElementById("width")?.value) || 0;
-    const ratioMode     = document.getElementById("aspectRatio")?.value || "free";
-    const customW       = parseInt(document.getElementById("customRatioW")?.value) || 16;
-    const customH       = parseInt(document.getElementById("customRatioH")?.value) || 9;
-    const outputFormat  = document.getElementById("outputFormat")?.value || "image/jpeg";
-    const baseQuality   = (parseInt(qualitySlider?.value) || 85) / 100;
-    const sizeValue     = parseFloat(document.getElementById("sizeValue")?.value) || 0;
-    const sizeUnit      = document.getElementById("sizeUnit")?.value || "kb";
+    const targetWidth  = parseInt(document.getElementById("width")?.value) || 0;
+    const ratioMode    = document.getElementById("aspectRatio")?.value || "free";
+    const customW      = parseInt(document.getElementById("customRatioW")?.value) || 16;
+    const customH      = parseInt(document.getElementById("customRatioH")?.value) || 9;
+    const outputFormat = document.getElementById("outputFormat")?.value || "image/jpeg";
+    const baseQuality  = (parseInt(qualitySlider?.value) || 85) / 100;
+    const sizeValue    = parseFloat(document.getElementById("sizeValue")?.value) || 0;
+    const sizeUnit     = document.getElementById("sizeUnit")?.value || "kb";
 
-    // Load image
     const img = await loadImage(file);
     setProgress(40, "Resizing…");
 
-    // Calculate dimensions
     let width  = img.width;
     let height = img.height;
     const aspectRatio = getAspectRatio(ratioMode, customW, customH);
 
     if (targetWidth > 0) {
       width = targetWidth;
-      if (aspectRatio !== null) {
-        height = Math.round(width / aspectRatio);
-      } else {
-        height = Math.round(img.height * (width / img.width));
-      }
+      height = aspectRatio !== null
+        ? Math.round(width / aspectRatio)
+        : Math.round(img.height * (width / img.width));
     }
 
-    // High-quality canvas
     const canvas = document.createElement("canvas");
     canvas.width  = width;
     canvas.height = height;
@@ -121,7 +115,6 @@ async function resizeImage() {
 
     setProgress(60, "Compressing…");
 
-    // Target size in bytes
     let targetBytes = null;
     if (sizeValue > 0) {
       targetBytes = sizeUnit === "mb"
@@ -129,7 +122,6 @@ async function resizeImage() {
         : sizeValue * 1024;
     }
 
-    // Quality loop
     let quality = baseQuality;
     let blob = null;
 
@@ -143,30 +135,33 @@ async function resizeImage() {
 
     setProgress(100, "Done!");
 
-    // Show preview
     const dataUrl = URL.createObjectURL(blob);
-    resizedPreview.src = dataUrl;
+    if (resizedPreview) resizedPreview.src = dataUrl;
 
-    // Info
-    const originalKB = (file.size / 1024).toFixed(1);
-    const newKB      = (blob.size / 1024).toFixed(1);
-    const saved      = ((1 - blob.size / file.size) * 100).toFixed(1);
+    // Result info
+    if (resultInfo) {
+      const originalKB = (file.size / 1024).toFixed(1);
+      const newKB      = (blob.size / 1024).toFixed(1);
+      const saved      = ((1 - blob.size / file.size) * 100).toFixed(1);
 
-    resultInfo.style.display = "block";
-    resultInfo.innerHTML = `
-      <strong>Original:</strong> ${originalKB} KB<br>
-      <strong>Resized:</strong> ${newKB} KB<br>
-      <strong>Dimensions:</strong> ${width} × ${height} px<br>
-      <strong>Saved:</strong> ${saved}%
-    `;
+      resultInfo.style.display = "block";
+      resultInfo.innerHTML = `
+        <strong>Original:</strong> ${originalKB} KB<br>
+        <strong>Resized:</strong> ${newKB} KB<br>
+        <strong>Dimensions:</strong> ${width} × ${height} px<br>
+        <strong>Saved:</strong> ${saved}%
+      `;
+    }
 
     // Download button
-    const ext = outputFormat.includes("webp") ? "webp"
-              : outputFormat.includes("png")  ? "png" : "jpg";
+    if (downloadBtn) {
+      const ext = outputFormat.includes("webp") ? "webp"
+                : outputFormat.includes("png")  ? "png" : "jpg";
 
-    downloadBtn.href = dataUrl;
-    downloadBtn.download = `resized-\( {width}x \){height}.${ext}`;
-    downloadBtn.style.display = "inline-block";
+      downloadBtn.href = dataUrl;
+      downloadBtn.download = `resized-\( {width}x \){height}.${ext}`;
+      downloadBtn.style.display = "inline-block";
+    }
 
   } catch (err) {
     console.error(err);
@@ -175,7 +170,7 @@ async function resizeImage() {
   }
 }
 
-// Helper: File → Image
+// Helper
 function loadImage(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -190,5 +185,5 @@ function loadImage(file) {
   });
 }
 
-// Wire button
+// Button
 document.getElementById("resizeBtn")?.addEventListener("click", resizeImage);
