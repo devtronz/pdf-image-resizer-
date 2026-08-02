@@ -3,109 +3,126 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Image Resizer | Matrix</title>
+  <title>Image Resizer – Fast & Private</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
+  <div class="app">
     <header>
-      <h1>IMAGE RESIZER</h1>
-      <p class="subtitle">Privacy-first • Offline processing</p>
+      <h1>Image Resizer</h1>
+      <p class="subtitle">Resize • Compress • Convert — 100% offline & private</p>
     </header>
 
     <!-- Upload -->
     <section class="card">
       <h2>1. Select Image</h2>
-      <input type="file" id="img" accept="image/*">
-      <div id="fileInfo" class="hint" style="display:none; margin-top:12px;"></div>
+      <label class="upload-area" for="img">
+        <input type="file" id="img" accept="image/*" hidden>
+        <span id="uploadText">Click or drop an image here</span>
+      </label>
+      <p id="fileInfo" class="hint"></p>
     </section>
 
     <!-- Preview -->
     <section class="card">
       <h2>Preview</h2>
-      <div class="preview-box">
+      <div class="preview-grid">
         <div>
-          <p class="preview-title">Original</p>
-          <img id="originalPreview" alt="Original">
+          <p class="label">Original</p>
+          <div class="preview-box">
+            <img id="originalPreview" alt="">
+          </div>
+          <p id="originalInfo" class="hint"></p>
         </div>
         <div>
-          <p class="preview-title">Resized</p>
-          <img id="resizedPreview" alt="Resized">
+          <p class="label">Result</p>
+          <div class="preview-box">
+            <img id="resizedPreview" alt="">
+          </div>
+          <p id="resultInfo" class="hint"></p>
         </div>
       </div>
-      <div id="resultInfo" class="info-card" style="display:none;"></div>
     </section>
 
     <!-- Settings -->
     <section class="card">
       <h2>2. Settings</h2>
 
-      <div class="row">
-        <label>Target Width (px)</label>
-        <input type="number" id="width" placeholder="e.g. 1920" min="1">
-      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Width (px)</label>
+          <input type="number" id="width" placeholder="Auto" min="1">
+        </div>
 
-      <div class="row">
-        <label>Aspect Ratio</label>
-        <select id="aspectRatio">
-          <option value="free">Free (keep original)</option>
-          <option value="square">1:1 Square</option>
-          <option value="landscape_16_9">16:9 Landscape</option>
-          <option value="photo_4_3">4:3 Photo</option>
-          <option value="portrait_9_16">9:16 Portrait</option>
-          <option value="custom">Custom</option>
-        </select>
-      </div>
+        <div class="field">
+          <label>Height (px)</label>
+          <input type="number" id="height" placeholder="Auto" min="1">
+        </div>
 
-      <div id="customRatioInputs" class="row" style="display:none;">
-        <input type="number" id="customRatioW" value="16" min="1">
-        <span>:</span>
-        <input type="number" id="customRatioH" value="9" min="1">
-      </div>
-
-      <div class="row">
-        <label>Output Format</label>
-        <select id="outputFormat">
-          <option value="image/webp">WebP</option>
-          <option value="image/jpeg">JPEG</option>
-          <option value="image/png">PNG</option>
-        </select>
-      </div>
-
-      <div class="row">
-        <label>Quality: <span id="qualityValue">85%</span></label>
-        <input type="range" id="qualitySlider" min="10" max="100" value="85">
-      </div>
-
-      <div class="row">
-        <label>Target File Size (optional)</label>
-        <div style="display:flex; gap:10px;">
-          <input type="number" id="sizeValue" placeholder="500" min="1" style="flex:1;">
-          <select id="sizeUnit" style="width:90px;">
-            <option value="kb">KB</option>
-            <option value="mb">MB</option>
+        <div class="field">
+          <label>Aspect Ratio</label>
+          <select id="aspectRatio">
+            <option value="free">Keep original</option>
+            <option value="square">1:1 Square</option>
+            <option value="16:9">16:9</option>
+            <option value="4:3">4:3</option>
+            <option value="9:16">9:16</option>
+            <option value="custom">Custom</option>
           </select>
+        </div>
+
+        <div class="field" id="customRatioField" style="display:none;">
+          <label>Custom Ratio</label>
+          <div class="ratio-inputs">
+            <input type="number" id="customW" value="16" min="1">
+            <span>:</span>
+            <input type="number" id="customH" value="9" min="1">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Format</label>
+          <select id="format">
+            <option value="image/jpeg">JPEG (best compatibility)</option>
+            <option value="image/png">PNG (lossless)</option>
+            <option value="image/webp">WebP (smaller size)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Quality: <span id="qualityLabel">85%</span></label>
+          <input type="range" id="quality" min="10" max="100" value="85">
+        </div>
+
+        <div class="field">
+          <label>Max File Size (optional)</label>
+          <div class="size-row">
+            <input type="number" id="maxSize" placeholder="e.g. 500" min="1">
+            <select id="sizeUnit">
+              <option value="kb">KB</option>
+              <option value="mb">MB</option>
+            </select>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- Action -->
-    <section class="card action">
-      <button id="resizeBtn">RESIZE IMAGE</button>
+    <section class="card action-card">
+      <button id="processBtn" disabled>Resize Image</button>
 
-      <div class="progress-wrapper">
-        <div id="progressText">Idle</div>
+      <div class="progress" id="progressWrap" style="display:none;">
         <div class="progress-bar">
           <div id="progressFill"></div>
         </div>
+        <p id="progressText">Processing…</p>
       </div>
 
-      <a id="downloadBtn" class="download-link" style="display:none;" download>DOWNLOAD RESIZED IMAGE</a>
+      <button id="downloadBtn" class="download" style="display:none;">Download Result</button>
     </section>
 
     <footer>
-      <a href="image-resizer.html">Image Resizer</a> • 
-      <a href="https://github.com/devtronz/pdf-image-resizer-">GitHub</a>
+      <p>Everything runs in your browser. Files never leave your device.</p>
     </footer>
   </div>
 
