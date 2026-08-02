@@ -2,101 +2,110 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Image Resizer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="container">
+    <header>
+      <h1>Image Resizer</h1>
+      <p class="subtitle">Resize & compress images offline • 100% private</p>
+    </header>
 
-<div class="container">
+    <!-- SELECT IMAGE -->
+    <section class="card">
+      <h2>1. Select Image</h2>
+      <input type="file" id="img" accept="image/*">
+      <p class="hint">JPG, PNG, WebP supported</p>
+    </section>
 
-  <header>
-    <h1>Image Resizer</h1>
-    <p class="subtitle">Resize images offline by size or dimensions</p>
-  </header>
-
-  <!-- SELECT IMAGE -->
-  <section class="card">
-    <h2>1. Select Image</h2>
-    <input type="file" id="img" accept="image/*">
-    <p class="hint">JPG, PNG, WebP supported</p>
-  </section>
-
-  <!-- PREVIEW -->
-  <section class="card">
-    <h2>Preview</h2>
-    <div class="preview-box">
-      <div>
-        <p class="preview-title">Original</p>
-        <img id="originalPreview">
+    <!-- PREVIEW -->
+    <section class="card">
+      <h2>Preview</h2>
+      <div class="preview-box">
+        <div>
+          <p class="preview-title">Original</p>
+          <img id="originalPreview" alt="Original">
+        </div>
+        <div>
+          <p class="preview-title">Resized</p>
+          <img id="resizedPreview" alt="Resized">
+        </div>
       </div>
-      <div>
-        <p class="preview-title">Resized</p>
-        <img id="resizedPreview">
+      <div id="resultInfo" class="info-card" style="display:none;"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="card">
+      <h2>2. Settings</h2>
+
+      <div class="row">
+        <label>Target Width (px)</label>
+        <input type="number" id="width" placeholder="e.g. 1920" min="1">
       </div>
-    </div>
-  </section>
 
-  <!-- FILE SIZE -->
-  <section class="card">
-    <h2>2. Target File Size (Optional)</h2>
-    <div class="row">
-      <input type="number" id="sizeValue" placeholder="Size">
-      <select id="sizeUnit">
-        <option value="kb">KB</option>
-        <option value="mb">MB</option>
-      </select>
-    </div>
-    <p class="hint">Leave empty if not needed</p>
-  </section>
-
-  <!-- DIMENSIONS -->
-  <section class="card">
-    <h2>3. Resize Dimensions (Optional)</h2>
-    <div class="row">
-      <input type="number" id="width" placeholder="Width (px)">
-      <span class="muted">or</span>
-      <input type="number" id="height" placeholder="Height (px)">
-    </div>
-    <p class="hint">Aspect ratio preserved automatically</p>
-  </section>
-
-  <!-- ACTION -->
-  <section class="card action">
-    <button onclick="resizeImage()">Resize Image</button>
-
-    <!-- PROGRESS -->
-    <div class="progress-wrapper">
-      <div id="progressText">Idle</div>
-      <div class="progress-bar">
-        <div id="progressFill"></div>
+      <div class="row">
+        <label>Aspect Ratio</label>
+        <select id="aspectRatio">
+          <option value="free">Free (keep original)</option>
+          <option value="square">1:1 Square</option>
+          <option value="landscape_16_9">16:9 Landscape</option>
+          <option value="photo_4_3">4:3 Photo</option>
+          <option value="portrait_9_16">9:16 Portrait</option>
+          <option value="custom">Custom</option>
+        </select>
       </div>
-    </div>
 
-    <a id="download" class="download-link" download></a>
-  </section>
+      <div id="customRatioInputs" class="row" style="display:none;">
+        <input type="number" id="customRatioW" value="16" min="1" placeholder="W">
+        <span>:</span>
+        <input type="number" id="customRatioH" value="9" min="1" placeholder="H">
+      </div>
 
-  <footer>
-    <a href="index.html">← Back to Photo to PDF</a>
-  </footer>
+      <div class="row">
+        <label>Output Format</label>
+        <select id="outputFormat">
+          <option value="image/webp">WebP (best compression)</option>
+          <option value="image/jpeg">JPEG</option>
+          <option value="image/png">PNG (lossless)</option>
+        </select>
+      </div>
 
-</div>
+      <div class="row">
+        <label>Quality: <span id="qualityValue">85%</span></label>
+        <input type="range" id="qualitySlider" min="10" max="100" value="85">
+      </div>
 
-<script src="resizer.js"></script>
+      <div class="row">
+        <label>Target File Size (optional)</label>
+        <input type="number" id="sizeValue" placeholder="e.g. 500" min="1">
+        <select id="sizeUnit">
+          <option value="kb">KB</option>
+          <option value="mb">MB</option>
+        </select>
+      </div>
+    </section>
 
-<footer style="background: #0f172a; color: #94a3b8; text-align: center; padding: 24px 16px; font-size: 0.95rem; margin-top: 60px; border-top: 1px solid #334155;">
-  <p><strong>PDF & Image Resizer</strong> – Everything processes right in your browser. Your files are never uploaded, stored, or shared.</p>
-  
-  
-  <p>
-    <a href="#" id="show-privacy" style="color: #60a5fa; text-decoration: none; font-weight: 500;">Privacy & Cookies Details</a>
-    •
-    <a href="https://github.com/devtronz/pdf-image-resizer-" style="color: #60a5fa; text-decoration: none;">GitHub Repository</a>
-  </p>
-  
-  <p style="margin-top: 12px; font-size: 0.9rem; opacity: 0.8;">
-    Open source project © 2026
-  </p>
-</footer>
+    <!-- ACTION -->
+    <section class="card action">
+      <button id="resizeBtn">Resize Image</button>
+
+      <div class="progress-wrapper">
+        <div id="progressText">Idle</div>
+        <div class="progress-bar">
+          <div id="progressFill"></div>
+        </div>
+      </div>
+
+      <a id="downloadBtn" class="download-link" style="display:none;" download>Download Resized Image</a>
+    </section>
+
+    <footer>
+      <a href="index.html">← Photo to PDF</a>
+    </footer>
+  </div>
+
+  <script src="resizer.js"></script>
 </body>
 </html>
