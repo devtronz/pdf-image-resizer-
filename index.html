@@ -1,406 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF & Image Resizer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Resizer | Matrix</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
-    
-    <!-- Header -->
-    <header class="bg-purple-700 py-6 shadow-lg">
-        <div class="container mx-auto px-4 text-center">
-            <h1 class="text-3xl font-bold">🖼️ Image Resizer</h1>
-            <p class="text-purple-200 mt-2">Privacy-first • Offline processing</p>
-        </div>
+<body>
+  <div class="container">
+    <header>
+      <h1>IMAGE RESIZER</h1>
+      <p class="subtitle">Privacy-first • Offline processing</p>
     </header>
 
-    <main class="container mx-auto px-4 py-8">
-        
-        <!-- Progress Bar -->
-        <div id="progressContainer" class="bg-gray-800 rounded-full h-4 mb-6 overflow-hidden hidden max-w-2xl mx-auto">
-            <div id="progressFill" class="bg-green-500 h-full transition-all duration-300" style="width: 0%"></div>
+    <!-- Upload -->
+    <section class="card">
+      <h2>1. Select Image</h2>
+      <input type="file" id="img" accept="image/*">
+      <div id="fileInfo" class="hint" style="display:none; margin-top:12px;"></div>
+    </section>
+
+    <!-- Preview -->
+    <section class="card">
+      <h2>Preview</h2>
+      <div class="preview-box">
+        <div>
+          <p class="preview-title">Original</p>
+          <img id="originalPreview" alt="Original">
         </div>
-        <p id="progressText" class="text-center text-gray-300 mb-6 hidden"></p>
+        <div>
+          <p class="preview-title">Resized</p>
+          <img id="resizedPreview" alt="Resized">
+        </div>
+      </div>
+      <div id="resultInfo" class="info-card" style="display:none;"></div>
+    </section>
 
-        <!-- Upload Section -->
-        <section class="bg-gray-800 rounded-lg p-6 mb-8 max-w-md mx-auto">
-            <h2 class="text-xl font-semibold mb-4">Step 1: Select Image</h2>
-            
-            <button id="uploadBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg w-full font-medium">
-                📁 Choose Image File
-            </button>
-            <input type="file" id="img" accept="image/*" class="hidden">
-            <div id="fileInfo" class="mt-4 text-sm text-gray-400 hidden text-center"></div>
-        </section>
+    <!-- Settings -->
+    <section class="card">
+      <h2>2. Settings</h2>
 
-        <!-- Preview Section -->
-        <section class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-8">
-            <div class="bg-gray-800 rounded-lg p-4">
-                <h3 class="font-semibold mb-3">Original</h3>
-                <div class="border border-gray-700 rounded-lg bg-gray-900 min-h-[200px] flex items-center justify-center">
-                    <img id="originalPreview" class="max-h-[400px] object-contain hidden">
-                    <p class="text-gray-500">No image loaded</p>
-                </div>
-                <p id="originalInfo" class="text-sm text-gray-400 mt-3"></p>
-            </div>
-            <div class="bg-gray-800 rounded-lg p-4">
-                <h3 class="font-semibold mb-3">Resized Preview</h3>
-                <div class="border border-gray-700 rounded-lg bg-gray-900 min-h-[200px] flex items-center justify-center">
-                    <img id="resizedPreview" class="max-h-[400px] object-contain hidden">
-                    <p class="text-gray-500">Processed image will appear here</p>
-                </div>
-                <p id="resultInfo" class="text-sm text-gray-400 mt-3"></p>
-            </div>
-        </section>
+      <div class="row">
+        <label>Target Width (px)</label>
+        <input type="number" id="width" placeholder="e.g. 1920" min="1">
+      </div>
 
-        <!-- Settings Section -->
-        <section class="bg-gray-800 rounded-lg p-6 max-w-4xl mx-auto mb-8">
-            <h2 class="text-xl font-semibold mb-6">Step 2: Configure Settings</h2>
-            
-            <div class="grid md:grid-cols-2 gap-6">
-                <!-- Left Column -->
-                <div class="space-y-4">
-                    <div>
-                        <label class="block mb-2 font-medium">Target Width (px)</label>
-                        <input type="number" id="width" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded focus:border-purple-500 focus:outline-none" placeholder="e.g., 1920">
-                    </div>
-                    
-                    <div>
-                        <label class="block mb-2 font-medium">Aspect Ratio</label>
-                        <select id="aspectRatio" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded focus:border-purple-500 focus:outline-none">
-                            <option value="free">Free Form (Preserve Original)</option>
-                            <option value="square">1:1 Square</option>
-                            <option value="landscape_16_9">16:9 Landscape</option>
-                            <option value="photo_4_3">4:3 Photo</option>
-                            <option value="portrait_9_16">9:16 Portrait</option>
-                            <option value="custom">Custom...</option>
-                        </select>
-                    </div>
-                    
-                    <div id="customRatioInputs" class="hidden">
-                        <label class="block mb-2 font-medium">Custom Ratio</label>
-                        <div class="flex items-center gap-2">
-                            <input type="number" id="customRatioW" value="16" min="1" max="100" class="flex-1 px-3 py-2 bg-gray-900 border border-gray-700 rounded">
-                            <span class="font-bold">:</span>
-                            <input type="number" id="customRatioH" value="9" min="1" max="100" class="flex-1 px-3 py-2 bg-gray-900 border border-gray-700 rounded">
-                        </div>
-                    </div>
-                </div>
+      <div class="row">
+        <label>Aspect Ratio</label>
+        <select id="aspectRatio">
+          <option value="free">Free (keep original)</option>
+          <option value="square">1:1 Square</option>
+          <option value="landscape_16_9">16:9 Landscape</option>
+          <option value="photo_4_3">4:3 Photo</option>
+          <option value="portrait_9_16">9:16 Portrait</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
 
-                <!-- Right Column -->
-                <div class="space-y-4">
-                    <div>
-                        <label class="block mb-2 font-medium">Output Format</label>
-                        <select id="outputFormat" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded focus:border-purple-500 focus:outline-none">
-                            <option value="image/webp">WebP (Best compression)</option>
-                            <option value="image/jpeg">JPEG (Universal)</option>
-                            <option value="image/png">PNG (Lossless)</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="block mb-2 font-medium">Quality: <span id="qualityValue">85%</span></label>
-                        <input type="range" id="qualitySlider" min="50" max="100" value="85" class="w-full" oninput="document.getElementById('qualityValue').textContent = this.value + '%';">
-                    </div>
-                    
-                    <div>
-                        <label class="block mb-2 font-medium">Target File Size (optional)</label>
-                        <div class="flex gap-2">
-                            <input type="number" id="sizeValue" placeholder="e.g., 500" class="flex-1 px-4 py-2 bg-gray-900 border border-gray-700 rounded focus:border-purple-500 focus:outline-none">
-                            <select id="sizeUnit" class="px-3 py-2 bg-gray-900 border border-gray-700 rounded">
-                                <option value="kb">KB</option>
-                                <option value="mb">MB</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+      <div id="customRatioInputs" class="row" style="display:none;">
+        <input type="number" id="customRatioW" value="16" min="1">
+        <span>:</span>
+        <input type="number" id="customRatioH" value="9" min="1">
+      </div>
 
-        <!-- Process Button -->
-        <section class="text-center max-w-md mx-auto mb-8">
-            <button onclick="processAndResize()" id="processBtn" class="bg-green-600 hover:bg-green-700 text-white px-10 py-4 rounded-lg font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed">
-                ✨ Resize & Download Image
-            </button>
-        </section>
+      <div class="row">
+        <label>Output Format</label>
+        <select id="outputFormat">
+          <option value="image/webp">WebP</option>
+          <option value="image/jpeg">JPEG</option>
+          <option value="image/png">PNG</option>
+        </select>
+      </div>
 
-        <!-- Download Section (Hidden initially) -->
-        <section id="downloadSection" class="text-center mb-8 hidden">
-            <div class="bg-gray-800 rounded-lg p-6 inline-block">
-                <h3 class="text-lg font-semibold mb-4">Ready to Download!</h3>
-                <a id="downloadBtn" href="#" download class="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg font-medium inline-block mr-2">
-                    📥 Download Resized Image
-                </a>
-                <button onclick="resetApp()" class="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium">
-                    ↺ Process Another
-                </button>
-            </div>
-        </section>
+      <div class="row">
+        <label>Quality: <span id="qualityValue">85%</span></label>
+        <input type="range" id="qualitySlider" min="10" max="100" value="85">
+      </div>
 
-    </main>
+      <div class="row">
+        <label>Target File Size (optional)</label>
+        <div style="display:flex; gap:10px;">
+          <input type="number" id="sizeValue" placeholder="500" min="1" style="flex:1;">
+          <select id="sizeUnit" style="width:90px;">
+            <option value="kb">KB</option>
+            <option value="mb">MB</option>
+          </select>
+        </div>
+      </div>
+    </section>
 
-    <!-- ALL JAVASCRIPT LOGIC EMBEDDED HERE -->
-    <script>
-        // ============================================================
-        // HIGH-QUALITY IMAGE RESIZER - EMBEDDED LOGIC
-        // ============================================================
+    <!-- Action -->
+    <section class="card action">
+      <button id="resizeBtn">RESIZE IMAGE</button>
 
-        let currentFile = null;
-        let previewCanvas = null;
+      <div class="progress-wrapper">
+        <div id="progressText">Idle</div>
+        <div class="progress-bar">
+          <div id="progressFill"></div>
+        </div>
+      </div>
 
-        // Progress helper
-        function setProgress(percent, text) {
-            const container = document.getElementById('progressContainer');
-            const fill = document.getElementById('progressFill');
-            const txt = document.getElementById('progressText');
-            
-            if (!txt.classList.contains('hidden')) {
-                container.classList.remove('hidden');
-            }
-            fill.style.width = percent + '%';
-            txt.textContent = text;
-            txt.classList.remove('hidden');
-        }
+      <a id="downloadBtn" class="download-link" style="display:none;" download>DOWNLOAD RESIZED IMAGE</a>
+    </section>
 
-        // Get aspect ratio from mode
-        function getAspectRatio(mode, customW = 1, customH = 1) {
-            switch(mode) {
-                case 'square': return 1;
-                case 'landscape_16_9': return 16/9;
-                case 'photo_4_3': return 4/3;
-                case 'portrait_9_16': return 9/16;
-                case 'custom': return customW / customH;
-                default: return null; // Free form
-            }
-        }
+    <footer>
+      <a href="image-resizer.html">Image Resizer</a> • 
+      <a href="https://github.com/devtronz/pdf-image-resizer-">GitHub</a>
+    </footer>
+  </div>
 
-        // MAIN PROCESSING FUNCTION
-        async function processAndResize() {
-            const fileInput = document.getElementById('img');
-            const file = fileInput.files[0];
-            
-            if (!file) {
-                alert('Please select an image first!');
-                return;
-            }
-
-            setProgress(10, 'Processing...');
-
-            try {
-                // Get settings from UI
-                const targetWidth = parseInt(document.getElementById('width').value) || 0;
-                const ratioMode = document.getElementById('aspectRatio').value;
-                const customRatioW = parseInt(document.getElementById('customRatioW').value) || 16;
-                const customRatioH = parseInt(document.getElementById('customRatioH').value) || 9;
-                const quality = parseFloat(document.getElementById('qualitySlider').value) / 100;
-                const outputFormat = document.getElementById('outputFormat').value;
-                const sizeValue = parseFloat(document.getElementById('sizeValue').value) || 0;
-                const sizeUnit = document.getElementById('sizeUnit').value;
-
-                setProgress(30, 'Loading image...');
-
-                // Load image
-                const img = await loadImage(file);
-                setProgress(50, 'Resizing...');
-
-                // Calculate dimensions
-                let width = img.width;
-                let height = img.height;
-                const aspectRatio = getAspectRatio(ratioMode, customRatioW, customRatioH);
-
-                if (targetWidth > 0) {
-                    width = targetWidth;
-                    if (aspectRatio !== null) {
-                        height = Math.round(width / aspectRatio);
-                    } else {
-                        height = Math.round(img.height * (width / img.width));
-                    }
-                }
-
-                // Create canvas with high-quality settings
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                
-                const ctx = canvas.getContext('2d', { alpha: false });
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-                ctx.drawImage(img, 0, 0, width, height);
-
-                setProgress(70, 'Compressing...');
-
-                // Calculate target bytes
-                let targetBytes = null;
-                if (sizeValue > 0) {
-                    targetBytes = sizeUnit === 'mb' ? sizeValue * 1024 * 1024 : sizeValue * 1024;
-                }
-
-                // Compress with quality adjustment loop
-                let currentQuality = quality;
-                let blob = null;
-
-                while (currentQuality >= 0.1) {
-                    blob = await canvasToBlob(canvas, outputFormat, currentQuality);
-                    
-                    if (!targetBytes || blob.size <= targetBytes) {
-                        break;
-                    }
-                    
-                    currentQuality -= 0.05;
-                }
-
-                setProgress(100, 'Done!');
-
-                // Show results
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const resizedPreview = document.getElementById('resizedPreview');
-                    resizedPreview.src = e.target.result;
-                    resizedPreview.classList.remove('hidden');
-
-                    // Display file info
-                    const resultInfo = document.getElementById('resultInfo');
-                    const originalSize = (file.size / 1024).toFixed(1);
-                    const newSize = (blob.size / 1024).toFixed(1);
-                    const compression = ((1 - blob.size/file.size) * 100).toFixed(1);
-
-                    resultInfo.innerHTML = `
-                        <strong>Original:</strong> ${originalSize} KB<br>
-                        <strong>Resized:</strong> ${newSize} KB<br>
-                        <strong>Dimensions:</strong> ${width}×${height}px<br>
-                        <strong>Saved:</strong> ${compression}%
-                    `;
-
-                    // Setup download
-                    const ext = outputFormat.includes('webp') ? 'webp' 
-                              : outputFormat.includes('png') ? 'png' : 'jpg';
-                    const downloadBtn = document.getElementById('downloadBtn');
-                    downloadBtn.href = e.target.result;
-                    downloadBtn.download = `resized-${width}x${height}.${ext}`;
-
-                    // Show download section
-                    document.getElementById('downloadSection').classList.remove('hidden');
-                };
-                reader.readAsDataURL(blob);
-
-            } catch (error) {
-                console.error('Processing error:', error);
-                setProgress(0, 'Error: ' + error.message);
-                alert('Error processing image. Check console for details.');
-            }
-        }
-
-        // Helper: Load image from file
-        function loadImage(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => resolve(img);
-                    img.onerror = () => reject(new Error('Failed to load image'));
-                    img.src = e.target.result;
-                };
-                reader.onerror = () => reject(new Error('Failed to read file'));
-                reader.readAsDataURL(file);
-            });
-        }
-
-        // Helper: Convert canvas to blob
-        function canvasToBlob(canvas, format, quality) {
-            return new Promise((resolve) => {
-                canvas.toBlob(resolve, format, quality);
-            });
-        }
-
-        // Reset app
-        function resetApp() {
-            document.getElementById('downloadSection').classList.add('hidden');
-            document.getElementById('resizedPreview').classList.add('hidden');
-            document.getElementById('resizedPreview').src = '';
-            document.getElementById('resultInfo').innerHTML = '';
-            document.getElementById('progressFill').style.width = '0%';
-            document.getElementById('progressText').textContent = '';
-            document.getElementById('progressContainer').classList.add('hidden');
-            document.getElementById('img').value = '';
-            document.getElementById('fileInfo').classList.add('hidden');
-            document.getElementById('originalPreview').classList.add('hidden');
-            document.getElementById('originalInfo').textContent = '';
-        }
-
-        // ============================================================
-        // INITIALIZATION ON PAGE LOAD
-        // ============================================================
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('✅ Image Resizer initialized');
-            
-            const uploadBtn = document.getElementById('uploadBtn');
-            const fileInput = document.getElementById('img');
-            
-            // Wire up upload button
-            uploadBtn.onclick = function(e) {
-                e.preventDefault();
-                console.log('Upload button clicked');
-                fileInput.click();
-            };
-
-            // Handle file selection
-            fileInput.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (!file) {
-                    console.log('No file selected');
-                    return;
-                }
-
-                currentFile = file;
-                console.log('File selected:', file.name);
-
-                // Display file info
-                const fileInfo = document.getElementById('fileInfo');
-                fileInfo.classList.remove('hidden');
-                fileInfo.innerHTML = `
-                    <strong>Selected:</strong> ${file.name}<br>
-                    <strong>Size:</strong> ${(file.size / 1024).toFixed(1)} KB<br>
-                    <strong>Type:</strong> ${file.type}
-                `;
-
-                // Show preview
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const originalPreview = document.getElementById('originalPreview');
-                    originalPreview.src = event.target.result;
-                    originalPreview.classList.remove('hidden');
-
-                    // Get dimensions
-                    const img = new Image();
-                    img.onload = function() {
-                        document.getElementById('originalInfo').textContent = 
-                            `${this.width} × ${this.height} pixels`;
-                    };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            });
-
-            // Toggle custom ratio inputs
-            document.getElementById('aspectRatio').addEventListener('change', function(e) {
-                const customDiv = document.getElementById('customRatioInputs');
-                customDiv.style.display = e.target.value === 'custom' ? 'block' : 'none';
-            });
-
-            // Enable process button if image loaded
-            const checkEnable = setInterval(() => {
-                const processBtn = document.getElementById('processBtn');
-                if (fileInput.files.length > 0) {
-                    processBtn.disabled = false;
-                } else {
-                    processBtn.disabled = true;
-                }
-            }, 500);
-
-            console.log('✅ All handlers attached');
-        });
-    </script>
+  <script src="resizer.js"></script>
 </body>
 </html>
