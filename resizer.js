@@ -1,189 +1,247 @@
-// resizer.js – Clean & error-free
+// Professional Image Resizer – Cross-browser (Chrome, Safari, Firefox, iOS)
 
+const imgInput        = document.getElementById("img");
+const uploadText      = document.getElementById("uploadText");
+const fileInfo        = document.getElementById("fileInfo");
 const originalPreview = document.getElementById("originalPreview");
 const resizedPreview  = document.getElementById("resizedPreview");
+const originalInfo    = document.getElementById("originalInfo");
+const resultInfo      = document.getElementById("resultInfo");
+const processBtn      = document.getElementById("processBtn");
+const downloadBtn     = document.getElementById("downloadBtn");
+const progressWrap    = document.getElementById("progressWrap");
 const progressFill    = document.getElementById("progressFill");
 const progressText    = document.getElementById("progressText");
-const resultInfo      = document.getElementById("resultInfo");
-const downloadBtn     = document.getElementById("downloadBtn");
-const qualitySlider   = document.getElementById("qualitySlider");
-const qualityValue    = document.getElementById("qualityValue");
+const qualitySlider   = document.getElementById("quality");
+const qualityLabel    = document.getElementById("qualityLabel");
+const aspectSelect    = document.getElementById("aspectRatio");
+const customRatioField= document.getElementById("customRatioField");
+
+let currentFile = null;
+let resultBlob  = null;
+
+// Detect WebP support
+function supportsWebP() {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 1;
+  return canvas.toDataURL("image/webp").startsWith("data:image/webp");
+}
 
 // Quality label
-if (qualitySlider && qualityValue) {
-  qualitySlider.addEventListener("input", () => {
-    qualityValue.textContent = qualitySlider.value + "%";
-  });
-}
+qualitySlider.addEventListener("input", () => {
+  qualityLabel.textContent = qualitySlider.value + "%";
+});
 
 // Custom ratio toggle
-const aspectSelect = document.getElementById("aspectRatio");
-const customRatioInputs = document.getElementById("customRatioInputs");
-if (aspectSelect && customRatioInputs) {
-  aspectSelect.addEventListener("change", () => {
-    customRatioInputs.style.display =
-      aspectSelect.value === "custom" ? "flex" : "none";
-  });
-}
+aspectSelect.addEventListener("change", () => {
+  customRatioField.style.display =
+    aspectSelect.value === "custom" ? "block" : "none";
+});
 
-// Progress helper
-function setProgress(percent, text) {
-  if (progressFill) progressFill.style.width = percent + "%";
-  if (progressText) progressText.textContent = text;
-}
-
-// Show original preview
-document.getElementById("img")?.addEventListener("change", (e) => {
+// File selected
+imgInput.addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
-  setProgress(5, "Image selected");
-  if (resultInfo) resultInfo.style.display = "none";
-  if (downloadBtn) downloadBtn.style.display = "none";
-  if (resizedPreview) resizedPreview.src = "";
+  currentFile = file;
+  resultBlob = null;
+  downloadBtn.style.display = "none";
+  resizedPreview.removeAttribute("src");
+  resultInfo.textContent = "";
 
-  const reader = new FileReader();
-  reader.onload = () => {
-    if (originalPreview) originalPreview.src = reader.result;
-  };
-  reader.readAsDataURL(file);
+  uploadText.textContent = file.name;
+  fileInfo.textContent = `${(file.size / 1024).toFixed(1)} KB • ${file.type || "image"}`;
+
+  try {
+    const img = await loadImage(file);
+    originalPreview.src = URL.createObjectURL(file);
+    originalInfo.textContent = `${img.width} × ${img.height} px`;
+    processBtn.disabled = false;
+  } catch {
+    alert("Could not load this image. Try another file.");
+    processBtn.disabled = true;
+  }
 });
 
-// Aspect ratio helper
-function getAspectRatio(mode, customW = 16, customH = 9) {
-  switch (mode) {
-    case "square":         return 1;
-    case "landscape_16_9": return 16 / 9;
-    case "photo_4_3":      return 4 / 3;
-    case "portrait_9_16":  return 9 / 16;
-    case "custom":         return customW / customH;
-    default:               return null;
+// Drag & drop support
+const uploadArea = document.querySelector(".upload-area");
+uploadArea.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  uploadArea.style.borderColor = "var(--primary)";
+});
+uploadArea.addEventListener("dragleave", () => {
+  uploadArea.style.borderColor = "";
+});
+uploadArea.addEventListener("drop", (e) => {
+  e.preventDefault();
+  uploadArea.style.borderColor = "";
+  if (e.dataTransfer.files.length) {
+    imgInput.files = e.dataTransfer.files;
+    imgInput.dispatchEvent(new Event("change"));
   }
-}
+});
 
-// Canvas → Blob
-function canvasToBlob(canvas, type, quality) {
-  return new Promise((resolve) => {
-    canvas.toBlob(resolve, type, quality);
-  });
-}
+// Main process
+processBtn.addEventListener("click", async () => {
+  if (!currentFile) return;
 
-// Main resize function
-async function resizeImage() {
-  const fileInput = document.getElementById("img");
-  const file = fileInput?.files[0];
-
-  if (!file) {
-    alert("Please select an image first!");
-    return;
-  }
-
+  processBtn.disabled = true;
+  progressWrap.style.display = "block";
   setProgress(10, "Loading image…");
 
   try {
-    const targetWidth  = parseInt(document.getElementById("width")?.value) || 0;
-    const ratioMode    = document.getElementById("aspectRatio")?.value || "free";
-    const customW      = parseInt(document.getElementById("customRatioW")?.value) || 16;
-    const customH      = parseInt(document.getElementById("customRatioH")?.value) || 9;
-    const outputFormat = document.getElementById("outputFormat")?.value || "image/jpeg";
-    const baseQuality  = (parseInt(qualitySlider?.value) || 85) / 100;
-    const sizeValue    = parseFloat(document.getElementById("sizeValue")?.value) || 0;
-    const sizeUnit     = document.getElementById("sizeUnit")?.value || "kb";
+    const img = await loadImage(currentFile);
+    setProgress(35, "Resizing…");
 
-    const img = await loadImage(file);
-    setProgress(40, "Resizing…");
+    // Settings
+    let width  = parseInt(document.getElementById("width").value)  || 0;
+    let height = parseInt(document.getElementById("height").value) || 0;
+    const ratioMode = aspectSelect.value;
+    const customW = parseInt(document.getElementById("customW").value) || 16;
+    const customH = parseInt(document.getElementById("customH").value) || 9;
+    let format = document.getElementById("format").value;
+    const quality = parseInt(qualitySlider.value) / 100;
+    const maxSizeVal = parseFloat(document.getElementById("maxSize").value) || 0;
+    const sizeUnit = document.getElementById("sizeUnit").value;
 
-    let width  = img.width;
-    let height = img.height;
-    const aspectRatio = getAspectRatio(ratioMode, customW, customH);
-
-    if (targetWidth > 0) {
-      width = targetWidth;
-      height = aspectRatio !== null
-        ? Math.round(width / aspectRatio)
-        : Math.round(img.height * (width / img.width));
+    // Force JPEG on browsers that don't support WebP export
+    if (format === "image/webp" && !supportsWebP()) {
+      format = "image/jpeg";
+      console.warn("WebP not supported → using JPEG");
     }
 
-    const canvas = document.createElement("canvas");
-    canvas.width  = width;
-    canvas.height = height;
+    // Calculate dimensions
+    let targetW = img.width;
+    let targetH = img.height;
 
-    const ctx = canvas.getContext("2d", { alpha: false });
+    const getRatio = () => {
+      if (ratioMode === "square") return 1;
+      if (ratioMode === "16:9") return 16 / 9;
+      if (ratioMode === "4:3") return 4 / 3;
+      if (ratioMode === "9:16") return 9 / 16;
+      if (ratioMode === "custom") return customW / customH;
+      return null;
+    };
+
+    const aspect = getRatio();
+
+    if (width && height) {
+      targetW = width;
+      targetH = height;
+    } else if (width) {
+      targetW = width;
+      targetH = aspect ? Math.round(width / aspect) : Math.round(img.height * (width / img.width));
+    } else if (height) {
+      targetH = height;
+      targetW = aspect ? Math.round(height * aspect) : Math.round(img.width * (height / img.height));
+    } else if (aspect) {
+      // Only ratio given → fit to original width
+      targetW = img.width;
+      targetH = Math.round(targetW / aspect);
+    }
+
+    // Draw high quality
+    const canvas = document.createElement("canvas");
+    canvas.width = targetW;
+    canvas.height = targetH;
+    const ctx = canvas.getContext("2d");
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(img, 0, 0, width, height);
+    ctx.drawImage(img, 0, 0, targetW, targetH);
 
     setProgress(60, "Compressing…");
 
+    // Target bytes
     let targetBytes = null;
-    if (sizeValue > 0) {
-      targetBytes = sizeUnit === "mb"
-        ? sizeValue * 1024 * 1024
-        : sizeValue * 1024;
+    if (maxSizeVal > 0) {
+      targetBytes = sizeUnit === "mb" ? maxSizeVal * 1024 * 1024 : maxSizeVal * 1024;
     }
 
-    let quality = baseQuality;
+    // Compress loop
+    let q = quality;
     let blob = null;
 
-    while (quality >= 0.1) {
-      blob = await canvasToBlob(canvas, outputFormat, quality);
+    while (q >= 0.1) {
+      blob = await canvasToBlob(canvas, format, q);
+      if (!blob) break;
       if (!targetBytes || blob.size <= targetBytes) break;
-      quality -= 0.05;
+      q -= 0.05;
     }
 
     if (!blob) throw new Error("Failed to create image");
 
-    setProgress(100, "Done!");
+    resultBlob = blob;
+    setProgress(100, "Done");
 
-    const dataUrl = URL.createObjectURL(blob);
-    if (resizedPreview) resizedPreview.src = dataUrl;
+    // Show result
+    const url = URL.createObjectURL(blob);
+    resizedPreview.src = url;
 
-    // Result info
-    if (resultInfo) {
-      const originalKB = (file.size / 1024).toFixed(1);
-      const newKB      = (blob.size / 1024).toFixed(1);
-      const saved      = ((1 - blob.size / file.size) * 100).toFixed(1);
+    const saved = ((1 - blob.size / currentFile.size) * 100).toFixed(1);
+    resultInfo.textContent =
+      `${(blob.size / 1024).toFixed(1)} KB • \( {targetW}× \){targetH} px • ${saved}% smaller`;
 
-      resultInfo.style.display = "block";
-      resultInfo.innerHTML = `
-        <strong>Original:</strong> ${originalKB} KB<br>
-        <strong>Resized:</strong> ${newKB} KB<br>
-        <strong>Dimensions:</strong> ${width} × ${height} px<br>
-        <strong>Saved:</strong> ${saved}%
-      `;
-    }
-
-    // Download button
-    if (downloadBtn) {
-      const ext = outputFormat.includes("webp") ? "webp"
-                : outputFormat.includes("png")  ? "png" : "jpg";
-
-      downloadBtn.href = dataUrl;
-      downloadBtn.download = `resized-\( {width}x \){height}.${ext}`;
-      downloadBtn.style.display = "inline-block";
-    }
+    downloadBtn.style.display = "block";
 
   } catch (err) {
     console.error(err);
+    alert("Error: " + err.message);
     setProgress(0, "Error");
-    alert("Failed to process image: " + err.message);
+  } finally {
+    processBtn.disabled = false;
   }
+});
+
+// Download (Safari-friendly)
+downloadBtn.addEventListener("click", () => {
+  if (!resultBlob) return;
+
+  const format = document.getElementById("format").value;
+  const ext = format.includes("png") ? "png" :
+              format.includes("webp") && supportsWebP() ? "webp" : "jpg";
+
+  const name = `resized-\( {Date.now()}. \){ext}`;
+  const url = URL.createObjectURL(resultBlob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 1500);
+});
+
+// Helpers
+function setProgress(percent, text) {
+  progressFill.style.width = percent + "%";
+  progressText.textContent = text;
 }
 
-// Helper
 function loadImage(file) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload  = () => resolve(img);
-      img.onerror = () => reject(new Error("Could not load image"));
-      img.src = e.target.result;
-    };
-    reader.onerror = () => reject(new Error("Could not read file"));
-    reader.readAsDataURL(file);
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Invalid image"));
+    img.src = URL.createObjectURL(file);
   });
 }
 
-// Button
-document.getElementById("resizeBtn")?.addEventListener("click", resizeImage);
+function canvasToBlob(canvas, type, quality) {
+  return new Promise((resolve) => {
+    if (canvas.toBlob) {
+      canvas.toBlob((blob) => resolve(blob), type, quality);
+    } else {
+      // Very old Safari fallback
+      const dataURL = canvas.toDataURL(type, quality);
+      const bin = atob(dataURL.split(",")[1]);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      resolve(new Blob([arr], { type }));
+    }
+  });
+}
