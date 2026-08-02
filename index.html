@@ -3,126 +3,166 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Image Resizer – Fast & Private</title>
+  <title>ImageResizer Pro</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="app">
-    <header>
-      <h1>Image Resizer</h1>
-      <p class="subtitle">Resize • Compress • Convert — 100% offline & private</p>
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">◈</span>
+        <span>ImageResizer <strong>Pro</strong></span>
+      </div>
+      <p class="tagline">Fast • Private • Offline</p>
     </header>
 
-    <!-- Upload -->
-    <section class="card">
-      <h2>1. Select Image</h2>
-      <label class="upload-area" for="img">
-        <input type="file" id="img" accept="image/*" hidden>
-        <span id="uploadText">Click or drop an image here</span>
-      </label>
-      <p id="fileInfo" class="hint"></p>
-    </section>
-
-    <!-- Preview -->
-    <section class="card">
-      <h2>Preview</h2>
-      <div class="preview-grid">
-        <div>
-          <p class="label">Original</p>
-          <div class="preview-box">
-            <img id="originalPreview" alt="">
+    <main class="main">
+      <!-- Upload Card -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Upload Image</h2>
+        </div>
+        <label class="upload-zone" id="uploadZone" for="img">
+          <input type="file" id="img" accept="image/*" hidden>
+          <div class="upload-content">
+            <div class="upload-icon">↑</div>
+            <p class="upload-title">Click to upload or drag & drop</p>
+            <p class="upload-sub">JPG, PNG, WebP • Max recommended 20MB</p>
           </div>
-          <p id="originalInfo" class="hint"></p>
+        </label>
+        <div id="fileInfo" class="file-info" style="display:none;"></div>
+      </section>
+
+      <!-- Preview Card -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Preview</h2>
         </div>
-        <div>
-          <p class="label">Result</p>
-          <div class="preview-box">
-            <img id="resizedPreview" alt="">
+        <div class="preview-grid">
+          <div class="preview-item">
+            <span class="preview-label">Original</span>
+            <div class="preview-frame">
+              <img id="originalPreview" alt="">
+              <span class="placeholder" id="originalPlaceholder">No image</span>
+            </div>
+            <p id="originalInfo" class="preview-meta"></p>
           </div>
-          <p id="resultInfo" class="hint"></p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Settings -->
-    <section class="card">
-      <h2>2. Settings</h2>
-
-      <div class="form-grid">
-        <div class="field">
-          <label>Width (px)</label>
-          <input type="number" id="width" placeholder="Auto" min="1">
-        </div>
-
-        <div class="field">
-          <label>Height (px)</label>
-          <input type="number" id="height" placeholder="Auto" min="1">
-        </div>
-
-        <div class="field">
-          <label>Aspect Ratio</label>
-          <select id="aspectRatio">
-            <option value="free">Keep original</option>
-            <option value="square">1:1 Square</option>
-            <option value="16:9">16:9</option>
-            <option value="4:3">4:3</option>
-            <option value="9:16">9:16</option>
-            <option value="custom">Custom</option>
-          </select>
-        </div>
-
-        <div class="field" id="customRatioField" style="display:none;">
-          <label>Custom Ratio</label>
-          <div class="ratio-inputs">
-            <input type="number" id="customW" value="16" min="1">
-            <span>:</span>
-            <input type="number" id="customH" value="9" min="1">
+          <div class="preview-item">
+            <span class="preview-label">Result</span>
+            <div class="preview-frame">
+              <img id="resizedPreview" alt="">
+              <span class="placeholder" id="resultPlaceholder">Waiting…</span>
+            </div>
+            <p id="resultInfo" class="preview-meta"></p>
           </div>
         </div>
+      </section>
 
-        <div class="field">
-          <label>Format</label>
-          <select id="format">
-            <option value="image/jpeg">JPEG (best compatibility)</option>
-            <option value="image/png">PNG (lossless)</option>
-            <option value="image/webp">WebP (smaller size)</option>
-          </select>
+      <!-- Settings Card -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Settings</h2>
         </div>
 
-        <div class="field">
-          <label>Quality: <span id="qualityLabel">85%</span></label>
-          <input type="range" id="quality" min="10" max="100" value="85">
-        </div>
+        <div class="settings-grid">
+          <!-- Resize Mode -->
+          <div class="field full">
+            <label>Resize Mode</label>
+            <div class="segmented">
+              <button type="button" class="seg-btn active" data-mode="pixels">Pixels</button>
+              <button type="button" class="seg-btn" data-mode="percent">Percentage</button>
+            </div>
+            <input type="hidden" id="resizeMode" value="pixels">
+          </div>
 
-        <div class="field">
-          <label>Max File Size (optional)</label>
-          <div class="size-row">
-            <input type="number" id="maxSize" placeholder="e.g. 500" min="1">
-            <select id="sizeUnit">
-              <option value="kb">KB</option>
-              <option value="mb">MB</option>
+          <!-- Percentage -->
+          <div class="field" id="percentField" style="display:none;">
+            <label>Scale (%)</label>
+            <input type="number" id="percent" value="50" min="1" max="500">
+          </div>
+
+          <!-- Width -->
+          <div class="field" id="widthField">
+            <label>Width (px)</label>
+            <input type="number" id="width" placeholder="Auto">
+          </div>
+
+          <!-- Height -->
+          <div class="field" id="heightField">
+            <label>Height (px)</label>
+            <input type="number" id="height" placeholder="Auto">
+          </div>
+
+          <!-- Aspect Ratio -->
+          <div class="field">
+            <label>Aspect Ratio</label>
+            <select id="aspectRatio">
+              <option value="free">Original</option>
+              <option value="square">1:1 Square</option>
+              <option value="16:9">16:9</option>
+              <option value="4:3">4:3</option>
+              <option value="9:16">9:16</option>
+              <option value="custom">Custom</option>
             </select>
           </div>
+
+          <!-- Custom Ratio -->
+          <div class="field" id="customRatioField" style="display:none;">
+            <label>Custom Ratio</label>
+            <div class="ratio-row">
+              <input type="number" id="customW" value="16" min="1">
+              <span>:</span>
+              <input type="number" id="customH" value="9" min="1">
+            </div>
+          </div>
+
+          <!-- Format -->
+          <div class="field">
+            <label>Format</label>
+            <select id="format">
+              <option value="image/jpeg">JPEG</option>
+              <option value="image/png">PNG</option>
+              <option value="image/webp">WebP</option>
+            </select>
+          </div>
+
+          <!-- Quality -->
+          <div class="field">
+            <label>Quality <span id="qualityLabel">85%</span></label>
+            <input type="range" id="quality" min="10" max="100" value="85">
+          </div>
+
+          <!-- Max Size -->
+          <div class="field">
+            <label>Max File Size (optional)</label>
+            <div class="size-row">
+              <input type="number" id="maxSize" placeholder="e.g. 500">
+              <select id="sizeUnit">
+                <option value="kb">KB</option>
+                <option value="mb">MB</option>
+              </select>
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Action -->
-    <section class="card action-card">
-      <button id="processBtn" disabled>Resize Image</button>
+      <!-- Action -->
+      <section class="action-bar">
+        <button id="processBtn" class="btn-primary" disabled>Resize Image</button>
+        <button id="downloadBtn" class="btn-success" style="display:none;">Download Result</button>
 
-      <div class="progress" id="progressWrap" style="display:none;">
-        <div class="progress-bar">
-          <div id="progressFill"></div>
+        <div class="progress-wrap" id="progressWrap" style="display:none;">
+          <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <span id="progressText">Processing…</span>
         </div>
-        <p id="progressText">Processing…</p>
-      </div>
+      </section>
+    </main>
 
-      <button id="downloadBtn" class="download" style="display:none;">Download Result</button>
-    </section>
-
-    <footer>
-      <p>Everything runs in your browser. Files never leave your device.</p>
+    <footer class="footer">
+      <p>100% private • Files never leave your device</p>
     </footer>
   </div>
 
