@@ -1,4 +1,4 @@
-// pdf.js – Clean multi-image to PDF converter
+// pdf.js – Clean multi-image to PDF
 
 const previewList  = document.getElementById("previewList");
 const progressFill = document.getElementById("progressFill");
@@ -9,8 +9,8 @@ function setProgress(percent, text) {
   if (progressText) progressText.textContent = text;
 }
 
-// Preview selected images
 document.getElementById("images")?.addEventListener("change", (e) => {
+  if (!previewList) return;
   previewList.innerHTML = "";
   const files = e.target.files;
 
@@ -27,11 +27,15 @@ document.getElementById("images")?.addEventListener("change", (e) => {
   setProgress(5, files.length + " image(s) selected");
 });
 
-// Create PDF
 async function makePDF() {
   const files = document.getElementById("images")?.files;
   if (!files || files.length === 0) {
     alert("Please select at least one image");
+    return;
+  }
+
+  if (!window.jspdf) {
+    alert("jsPDF library not loaded");
     return;
   }
 
@@ -56,7 +60,6 @@ async function makePDF() {
     const dataUrl = await readFileAsDataURL(files[i]);
     const img     = await loadImage(dataUrl);
 
-    // Fit image inside page while keeping aspect ratio
     const ratio = Math.min(
       pageWidth  / img.width,
       pageHeight / img.height
@@ -69,7 +72,6 @@ async function makePDF() {
 
     if (i > 0) pdf.addPage();
 
-    // Detect format
     const format = files[i].type.includes("png") ? "PNG" : "JPEG";
     pdf.addImage(img, format, x, y, imgWidth, imgHeight);
   }
@@ -78,7 +80,6 @@ async function makePDF() {
   pdf.save("photos.pdf");
 }
 
-// Helpers
 function readFileAsDataURL(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
