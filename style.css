@@ -1,172 +1,298 @@
+/* ========================================
+   PDF & Image Resizer – Modern Dark Theme
+   ======================================== */
+
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --border: #334155;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --primary: #8b5cf6;
+  --primary-hover: #7c3aed;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --radius: 12px;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
 * {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 body {
-  margin: 0;
-  background: #f4f6fb;
-  color: #111827;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  padding: 24px 16px;
 }
 
+/* ========== Layout ========== */
 .container {
-  max-width: 480px;
-  margin: auto;
-  padding: 16px;
+  max-width: 720px;
+  margin: 0 auto;
 }
 
 header {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 32px;
 }
 
-h1 {
-  margin: 0;
-  font-size: 24px;
+header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .subtitle {
-  font-size: 14px;
-  color: #6b7280;
+  color: var(--muted);
+  margin-top: 6px;
+  font-size: 1rem;
 }
 
+/* ========== Cards ========== */
 .card {
-  background: #fff;
-  padding: 16px;
-  border-radius: 12px;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
 }
 
 .card h2 {
-  font-size: 16px;
-  margin-bottom: 10px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #f1f5f9;
 }
 
-input, select {
+/* ========== Form Elements ========== */
+input[type="file"],
+input[type="number"],
+input[type="range"],
+select,
+button {
+  font: inherit;
+}
+
+input[type="file"] {
   width: 100%;
   padding: 12px;
-  font-size: 15px;
+  background: #0f172a;
+  border: 1px dashed var(--border);
   border-radius: 8px;
-  border: 1px solid #d1d5db;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+input[type="file"]:hover {
+  border-color: var(--primary);
+}
+
+input[type="number"],
+select {
+  width: 100%;
+  padding: 12px 14px;
+  background: #0f172a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input[type="number"]:focus,
+select:focus {
+  border-color: var(--primary);
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--primary);
+}
+
+label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  color: var(--muted);
 }
 
 .row {
-  display: flex;
-  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.row:last-child {
+  margin-bottom: 0;
+}
+
+/* Custom ratio inputs side-by-side */
+#customRatioInputs {
+  display: none;
+  gap: 10px;
   align-items: center;
 }
 
-.muted {
-  color: #9ca3af;
-  font-size: 14px;
+#customRatioInputs input {
+  flex: 1;
 }
 
-.hint {
-  font-size: 13px;
-  color: #6b7280;
-  margin-top: 6px;
+#customRatioInputs span {
+  font-weight: 600;
+  color: var(--muted);
 }
 
+/* ========== Buttons ========== */
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 14px 24px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+button:hover {
+  background: var(--primary-hover);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ========== Preview ========== */
 .preview-box {
-  display: flex;
-  gap: 12px;
-}
-
-.preview-box div {
-  width: 50%;
-  text-align: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
 .preview-title {
-  font-size: 13px;
-  color: #6b7280;
-  margin-bottom: 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+  text-align: center;
 }
 
 .preview-box img {
   width: 100%;
-  max-height: 180px;
+  max-height: 220px;
   object-fit: contain;
-  background: #f3f4f6;
+  background: #0f172a;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  border: 1px dashed #d1d5db;
+  min-height: 140px;
 }
 
-.action {
-  text-align: center;
+/* ========== Result Info ========== */
+.info-card {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: #0f172a;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  border-left: 3px solid var(--success);
 }
 
-button {
-  background: #4f46e5;
-  color: white;
-  border: none;
-  padding: 14px;
-  width: 100%;
-  border-radius: 10px;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #4338ca;
-}
-
-.download-link {
-  display: block;
-  margin-top: 12px;
-  color: #2563eb;
-  font-weight: 500;
-  text-decoration: none;
-}
-
-/* PROGRESS */
+/* ========== Progress ========== */
 .progress-wrapper {
-  margin-top: 12px;
+  margin-top: 20px;
 }
 
 #progressText {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: 0.9rem;
+  color: var(--muted);
   margin-bottom: 6px;
 }
 
 .progress-bar {
-  width: 100%;
   height: 8px;
-  background: #e5e7eb;
-  border-radius: 999px;
+  background: #0f172a;
+  border-radius: 99px;
   overflow: hidden;
 }
 
 #progressFill {
-  width: 0%;
   height: 100%;
-  background: #4f46e5;
+  width: 0%;
+  background: linear-gradient(90deg, var(--primary), var(--success));
+  border-radius: 99px;
   transition: width 0.3s ease;
 }
 
+/* ========== Download Link ========== */
+.download-link {
+  display: none;
+  margin-top: 16px;
+  text-align: center;
+  padding: 12px 20px;
+  background: var(--success);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.download-link:hover {
+  background: #16a34a;
+}
+
+/* ========== Footer ========== */
 footer {
   text-align: center;
-  margin-top: 10px;
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 footer a {
-  font-size: 14px;
-  color: #2563eb;
+  color: #60a5fa;
   text-decoration: none;
+  font-weight: 500;
 }
 
-.preview-list {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+footer a:hover {
+  text-decoration: underline;
 }
 
-.preview-list img {
-  width: 100%;
-  height: 100px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
+.hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 560px) {
+  .preview-box {
+    grid-template-columns: 1fr;
+  }
+
+  header h1 {
+    font-size: 1.6rem;
+  }
+
+  .card {
+    padding: 18px;
+  }
 }
