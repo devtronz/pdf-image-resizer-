@@ -25,14 +25,66 @@
         </div>
         <p id="progressText" class="text-center text-gray-300 mb-6"></p>
 
-        <!-- Upload Section -->
-        <section class="bg-gray-800 rounded-lg p-6 mb-8">
-            <h2 class="text-xl font-semibold mb-4">Step 1: Select Image</h2>
-            
-            <!-- Upload Button (triggers file input with user activation) -->
-            <button onclick="triggerUpload()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition w-full md:w-auto">
-                📁 Choose Image File
-            </button>
+       <!-- Simplified Upload Section - Replace your entire upload section -->
+<section class="bg-gray-800 rounded-lg p-6 mb-8">
+    <h2 class="text-xl font-semibold mb-4">Step 1: Select Image</h2>
+    
+    <!-- Direct file input with label (always works) -->
+    <label for="img" class="block bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium cursor-pointer text-center transition w-full md:w-auto max-w-md mx-auto">
+        📁 Choose Image File
+        <input type="file" id="img" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+    </label>
+    
+    <!-- File info display -->
+    <div id="fileInfo" class="mt-4 text-sm text-gray-400 hidden text-center"></div>
+</section>
+
+<!-- Add this function to your scripts (at the bottom of index.html before </body>) -->
+<script>
+// Simple file selection handler
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Display file info
+    const fileInfo = document.getElementById('fileInfo');
+    fileInfo.classList.remove('hidden');
+    fileInfo.innerHTML = `
+        <strong>Selected:</strong> ${file.name}<br>
+        <strong>Size:</strong> ${(file.size / 1024).toFixed(1)} KB<br>
+        <strong>Type:</strong> ${file.type}
+    `;
+    
+    // Show preview
+    const originalPreview = document.getElementById('originalPreview');
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        originalPreview.src = e.target.result;
+        originalPreview.classList.remove('hidden');
+        
+        // Load dimensions
+        const img = new Image();
+        img.onload = function() {
+            const originalInfo = document.getElementById('originalInfo');
+            if (originalInfo) {
+                originalInfo.textContent = `${this.width} × ${this.height} pixels`;
+            }
+        };
+        img.src = e.target.result;
+    };
+    
+    reader.readAsDataURL(file);
+}
+
+// Also attach event listener for safety
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('img');
+    if (fileInput) {
+        fileInput.addEventListener('change', handleFileSelect);
+    }
+});
+</script>
             
             <!-- Hidden file input -->
             <input type="file" id="img" accept="image/*" class="hidden">
